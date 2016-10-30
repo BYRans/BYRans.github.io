@@ -1,0 +1,712 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="../../../../vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="../../../../vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="../../../../css/main.css?v=5.0.2" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="YARN," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="../../../../images/avatar.jpg?v=5.0.2" />
+
+
+
+
+
+
+<meta name="description" content="Hadoop 1.0存在的问题由于Hadoop 1.0的良好特性，Hadoop 1.0被应用到了各行各业。但是Hadoop的最初设计是为了用于搜索引擎业务（如Yahoo、Google等公司），其最初的设计中存在的一些问题逐渐凸现出来。主要存在以下几个方面：
+
+存在单点故障，影响可扩展性和稳定性Hadoop 1.0中HDFS的NameNode和MapReduce的JobTracker设计为单一节点，">
+<meta property="og:type" content="article">
+<meta property="og:title" content="YARN与MRv1的对比">
+<meta property="og:url" content="http://yoursite.com/2016/09/15/YARN与MRv1的对比/index.html">
+<meta property="og:site_name" content="DingYu">
+<meta property="og:description" content="Hadoop 1.0存在的问题由于Hadoop 1.0的良好特性，Hadoop 1.0被应用到了各行各业。但是Hadoop的最初设计是为了用于搜索引擎业务（如Yahoo、Google等公司），其最初的设计中存在的一些问题逐渐凸现出来。主要存在以下几个方面：
+
+存在单点故障，影响可扩展性和稳定性Hadoop 1.0中HDFS的NameNode和MapReduce的JobTracker设计为单一节点，">
+<meta property="og:image" content="http://images.cnblogs.com/cnblogs_com/BYRans/761498/o_MRv1_architecture.png">
+<meta property="og:image" content="http://images.cnblogs.com/cnblogs_com/BYRans/761498/o_Busy_JobTracker.png">
+<meta property="og:image" content="http://images.cnblogs.com/cnblogs_com/BYRans/761498/o_yarn_architecture.gif">
+<meta property="og:updated_time" content="2016-10-30T09:57:08.670Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="YARN与MRv1的对比">
+<meta name="twitter:description" content="Hadoop 1.0存在的问题由于Hadoop 1.0的良好特性，Hadoop 1.0被应用到了各行各业。但是Hadoop的最初设计是为了用于搜索引擎业务（如Yahoo、Google等公司），其最初的设计中存在的一些问题逐渐凸现出来。主要存在以下几个方面：
+
+存在单点故障，影响可扩展性和稳定性Hadoop 1.0中HDFS的NameNode和MapReduce的JobTracker设计为单一节点，">
+<meta name="twitter:image" content="http://images.cnblogs.com/cnblogs_com/BYRans/761498/o_MRv1_architecture.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2016/09/15/YARN与MRv1的对比/"/>
+
+
+  <title> YARN与MRv1的对比 | DingYu </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="en">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">DingYu</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">DingYu`s Blog</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="http://www.dingyu.org.cn/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            Home
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="http://www.dingyu.org.cn/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            Archives
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="http://www.dingyu.org.cn/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            Tags
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="https://www.linkedin.com/in/byrans" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            About
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                YARN与MRv1的对比
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">Posted on</span>
+            <time itemprop="dateCreated" datetime="2016-09-15T00:00:00+08:00" content="2016-09-15">
+              2016-09-15
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="Hadoop-1-0存在的问题"><a href="#Hadoop-1-0存在的问题" class="headerlink" title="Hadoop 1.0存在的问题"></a>Hadoop 1.0存在的问题</h1><p>由于Hadoop 1.0的良好特性，Hadoop 1.0被应用到了各行各业。但是Hadoop的最初设计是为了用于搜索引擎业务（如Yahoo、Google等公司），其最初的设计中存在的一些问题逐渐凸现出来。主要存在以下几个方面：</p>
+<ul>
+<li><p>存在单点故障，影响可扩展性和稳定性<br>Hadoop 1.0中HDFS的NameNode和MapReduce的JobTracker设计为单一节点，这将是整个系统的单点故障源（SPOF）。单点故障主要由以下两个原因导致：</p>
+<ul>
+<li>NameNode内存消耗过大<br>DataNode会定期向NameNode发送Block Report，这些数据是占用内存空间的，随着Hadoop集群存储空间的增多，这些Block Report会越来越多，因此NameNode的内存容量成为制约Hadoop集群的一个重要因素。</li>
+<li>JobTracker内存消耗过大<br>随着JobTracker处理的job数量的增长，任务数量也随着增长，从而导致JobTracker的内存消耗过大，同时任务失败的概率也随着增加。<br><img src="http://images.cnblogs.com/cnblogs_com/BYRans/761498/o_MRv1_architecture.png" alt="MRv1_architecture"></li>
+</ul>
+</li>
+<li><p>资源管理方案不灵活</p>
+<ul>
+<li><strong>slot数目无法动态修改</strong>。Hadoop 1.0采用了静态slot资源设置策略，即每个节点实现配置好可用的slot总数，这些slot数目一旦启动后无法再动态修改。</li>
+<li><strong>资源无法共享</strong>。Hadoop 1.0将slot分为Map slot和Reduce slot两种，且不允许共享。对于一个作业，刚开始运行时，Map slot资源紧缺而Reduce slot空闲，当Map Task全部运行完成后，Reduce slot紧缺而Map slot空闲。很明显，这种区分slot类别的资源管理方案在一定程度上降低了slot的利用率。</li>
+<li><strong>资源划分粒度粗糙</strong>。这种基于slot的资源划分方法的划分粒度仍过于粗糙，往往会造成节点资源利用率过高或者过低。比如，Hadoop默认为每个slot分配2G内存和1个CPU，如果一个应用程序的任务只需要1GB内存，则会产生“资源碎片”，从而降低集群资源的利用率；同样，如果一个应用程序的任务需要3GB内存，则会隐式地抢占其他任务的资源，从而产生资源抢占现象，可能导致集群利用率过高。<strong>另外</strong>，slot只是从内存和CPU的角度对资源进行分配，在实际系统中，资源本身是多维度的，例如：CPU、内存、网络I/O和磁盘I/O等。</li>
+<li><strong>没引入有效的资源隔离机制</strong>。Hadoop 1.0仅采用了基于jvm的资源隔离机制，这种方式仍过于粗糙，很多资源，比如CPU，无法进行隔离，这会造成同一个节点上的任务之间干扰严重。</li>
+</ul>
+</li>
+<li><p><strong>计算模式单一</strong>。只支持MapReduce模式，不能有效的支持Storm、Spark等计算框架。</p>
+</li>
+</ul>
+<p><br><br>举个栗子，假设Hadoop 1.0同时运行10个job，每个job有100个task，假设每个task运行在不同的机器上，那么，就有10000个几点在同时运行。如果每个节点（即每个task）每个5分钟向JobTracker发送心跳，那么JobTracker节点的压力会特别大，所以正常情况下Hadoop 1.0的集群规模只能达到4000台左右。JobTracker压力过重也是造成Hadoop 1.0单点故障和可扩展性差的重要原因。<br><img src="http://images.cnblogs.com/cnblogs_com/BYRans/761498/o_Busy_JobTracker.png" alt="busyJobTracter"></p>
+<h1 id="YARN的改进"><a href="#YARN的改进" class="headerlink" title="YARN的改进"></a>YARN的改进</h1><p>在Hadoop 1.0中JobTracker主要完成两项功能：资源的管理和作业控制。在集群规模过大的场景下，JobTracker压力过重，因此在YARN的设计中，资源的管理和作业控制是分离开的。取代JobTracker的是ResourceManager、ApplicationMaster、NodeManager三个部分。如下图所示：<br><img src="http://images.cnblogs.com/cnblogs_com/BYRans/761498/o_yarn_architecture.gif" alt="yarn_architecture"></p>
+<ul>
+<li>Resource Manager是一个全局的资源管理器 ，它做的事情是调度、启动每一个Job所属的ApplicationMaster、另外监控ApplicationMaster的存在情况。<strong>注：RM只负责监控AM，在AM运行失败时候启动它，RM并不负责AM内部任务的容错，这由AM来完成</strong>。</li>
+<li>ApplicationMaster是每一个Job（不是每一种）都有的一个部分，ApplicationMaster可以运行在ResourceManager以外的机器上。</li>
+<li>NodeManager是ResourceManager的在每个节点的代理，负责 Container 状态的维护，并向RM保持心跳。</li>
+<li>另外，YARN使用Container对资源进行抽象，它封装了某个节点上一定量的资源（现在YARN仅支持CPU和内存两种资源）。当AM向RM申请资源时，RM为AM返回的资源使用Container表示。YARN会为每个任务分配一个或多个Container，且该任务只能使用该Container中描述的资源。<strong>注：AM也是运行在一个Container中</strong>。</li>
+</ul>
+<h1 id="YARN设计的优点"><a href="#YARN设计的优点" class="headerlink" title="YARN设计的优点"></a>YARN设计的优点</h1><ul>
+<li><strong>将资源管理和作业控制分离，减小JobTracker压力</strong><ul>
+<li>YARN的设计大大减小了 JobTracker（也就是现在的 ResourceManager）的资源消耗，并且让监测每一个 Job 子任务 (tasks) 状态的程序分布式化了，更安全、更优美。</li>
+<li>老的框架中，JobTracker一个很大的负担就是监控job下的tasks的运行状况，现在，这个部分就扔给ApplicationMaster做了而ResourceManager中有一个模块叫做ApplicationsManager(ASM)，它负责监测ApplicationMaster的运行状况。</li>
+</ul>
+</li>
+<li><strong>能够支持不同的计算框架</strong><br>将计算框架和底层存储调度分开，以支持更多的计算框架。在YARN中ApplicationMaster是一个可变更的部分，用户可以对不同的计算框架写自己的 AppMst，让更多类型的计算框架能够跑在Hadoop集群中，可以参考YARN官方配置模板中的mapred-site.xml配置。</li>
+<li><strong>资源管理更加合理</strong><ul>
+<li>使用Container对资源进行抽象，Container不同于MRv1中的slot，它是一个动态资源划分单位，是根据应用程序的需求动态生成的，比之前以slot数目更合理。</li>
+<li>且使用了轻量级资源隔离机制Cgroups进行资源隔离。</li>
+<li>Container的设计避免了之前的map slot/reduce slot分开造成集群资源闲置的尴尬情况。</li>
+</ul>
+</li>
+</ul>
+<h1 id="YARN与Mesos的对比"><a href="#YARN与Mesos的对比" class="headerlink" title="YARN与Mesos的对比"></a>YARN与Mesos的对比</h1><table>
+<thead>
+<tr>
+<th style="text-align:center">　</th>
+<th style="text-align:left">Mesos</th>
+<th style="text-align:left">YARN</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">框架担任的角色</td>
+<td style="text-align:left">各个计算框架需在Mesos中部署后才能使用，完全融入到Mesos中</td>
+<td style="text-align:left">计算框架只是作为客户端的库使用，不在YARN中部署即可使用</td>
+</tr>
+<tr>
+<td style="text-align:center">调度机制</td>
+<td style="text-align:left">双层调度；第一层由Mesos Master将空闲资源分配给框架，第二层由各个框架自带的调度器对资源的使用进行分配</td>
+<td style="text-align:left">双层调度，第一层由RM分配资源，第二层再对框架的任务进行调度</td>
+</tr>
+<tr>
+<td style="text-align:center">资源分配</td>
+<td style="text-align:left">先粗粒度分配，再细粒度分配</td>
+<td style="text-align:left">细粒度分配</td>
+</tr>
+<tr>
+<td style="text-align:center">资源隔离性</td>
+<td style="text-align:left">采用Linux Container对内存和CPU两种资源进行隔离</td>
+<td style="text-align:left">当前采用OS进程级别隔离</td>
+</tr>
+<tr>
+<td style="text-align:center">扩展性</td>
+<td style="text-align:left">支持6,000 ~ 50,000个节点</td>
+<td style="text-align:left">目标是支持6,000 ~ 100,000个节点</td>
+</tr>
+</tbody>
+</table>
+<h1 id="YARN的不足与展望"><a href="#YARN的不足与展望" class="headerlink" title="YARN的不足与展望"></a>YARN的不足与展望</h1><p>YARN是一个<strong>双层调度器（Two-level scheduler）</strong>，解决了<strong>中央调度器（Monolithic scheduler）</strong>的不足（中央调度器典型的代表就是JobTracker)，双层调度架构看上去为调度增加了灵活性和并发性，但实际上它保守的资源可见性和上锁算法（使用悲观并发）也限制了灵活性和并发性。第一，保守的资源可见性导致各框架无法感知整个集群的资源使用情况，有空闲资源无法通知排队的进程，容易造成资源的浪费；第二，上锁算法降低了并发性，调度器会将资源分配给一个架构，只有该架构返回资源后，调度器才回将该部分资源分配给其他架构，在第一个分配过程中，资源相当于被锁住，从而降低了并发性。总结来说，YARN同其他双层架构的调度器（例如：Mesos）都有的不足为：</p>
+<ul>
+<li>各个应用无法感知集群整体资源的使用情况，只能等待上层调度推送信息。</li>
+<li>资源分配采用轮询、ResourceOffer机制（mesos)，在分配过程中使用悲观锁，并发粒度小。</li>
+<li>缺乏一种有效的竞争或优先抢占的机制。</li>
+</ul>
+<p>为了改善双层调度系统的的不足，尤其是各个应用无法感知集群整体资源的使用情况和悲观加锁控制导致的并发性不高这两个不足，<strong>共享状态调度器（Shared State Scheduler）</strong>被越来越多的人所重视，其中最具代表性的就是Google的Omega。共享状态调度器在双层调度器的基础上做了改进：</p>
+<ul>
+<li>简化了双层调度器中的全局资源管理器，改为由一个Cell State来记录集群内的资源使用情况，这些使用情况都是共享的数据，以此来达到与全局资源管理器相同的效果。</li>
+<li>所有任务访问共享数据时，采用乐观并发控制方法。</li>
+</ul>
+<p>共享调度器也存在不足。例如，当某一资源被不同任务同时访问时容易产生冲突，访问的任务越多时，冲突次数就会越多，冲突次数越高调度器的性能下降越快，这将影响调度器的工作效率和工作性能。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/reward.png" alt="DingYu wechat" style="width: 200px; max-width: 100%;"/>
+    <div>¥打赏支持</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="../../../../tags/YARN/" rel="tag">#YARN</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="../../10/YARN资源调度器/" rel="next" title="YARN资源调度器">
+                <i class="fa fa-chevron-left"></i> YARN资源调度器
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="../../17/YARN基本框架介绍/" rel="prev" title="YARN基本框架介绍">
+                YARN基本框架介绍 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="../../../../images/avatar.jpg"
+               alt="DingYu" />
+          <p class="site-author-name" itemprop="name">DingYu</p>
+          <p class="site-description motion-element" itemprop="description">Keep moving. Don't settle.</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="http://www.dingyu.org.cn/archives">
+              <span class="site-state-item-count">14</span>
+              <span class="site-state-item-name">posts</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="http://www.dingyu.org.cn/tags">
+                <span class="site-state-item-count">6</span>
+                <span class="site-state-item-name">tags</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/BYRans" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://cn.linkedin.com/in/byrans" target="_blank" title="LinkedIn">
+                  
+                    <i class="fa fa-fw fa-linkedin-square"></i>
+                  
+                  LinkedIn
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://www.cnblogs.com/BYRans/" target="_blank" title="CNBlog">
+                  
+                    <i class="fa fa-fw fa-hand-o-right"></i>
+                  
+                  CNBlog
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Hadoop-1-0存在的问题"><span class="nav-number">1.</span> <span class="nav-text">Hadoop 1.0存在的问题</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#YARN的改进"><span class="nav-number">2.</span> <span class="nav-text">YARN的改进</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#YARN设计的优点"><span class="nav-number">3.</span> <span class="nav-text">YARN设计的优点</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#YARN与Mesos的对比"><span class="nav-number">4.</span> <span class="nav-text">YARN与Mesos的对比</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#YARN的不足与展望"><span class="nav-number">5.</span> <span class="nav-text">YARN的不足与展望</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">DingYu</span>
+</div>
+
+<div class="powered-by">
+  Powered by <a class="theme-link" href="https://hexo.io">Hexo</a>
+</div>
+
+<div class="theme-info">
+  Theme -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="../../../../vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="../../../../vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="../../../../vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="../../../../vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="../../../../vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="../../../../vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="../../../../js/src/utils.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="../../../../js/src/motion.js?v=5.0.2"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="../../../../js/src/affix.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="../../../../js/src/schemes/pisces.js?v=5.0.2"></script>
+
+
+
+  
+  <script type="text/javascript" src="../../../../js/src/scrollspy.js?v=5.0.2"></script>
+<script type="text/javascript" src="../../../../js/src/post-details.js?v=5.0.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="../../../../js/src/bootstrap.js?v=5.0.2"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+
+</body>
+</html>

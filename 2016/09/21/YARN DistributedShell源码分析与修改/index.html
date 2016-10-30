@@ -1,0 +1,868 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="../../../../vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="../../../../vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="../../../../css/main.css?v=5.0.2" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="YARN," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="../../../../images/avatar.jpg?v=5.0.2" />
+
+
+
+
+
+
+<meta name="description" content="1 概述
+2 YARN DistributedShell不能满足当前需求
+2.1 功能需求
+2.2 YARN DistributedShell对需求的支持情况
+2.3 需要对YARN DistributedShell进行的修改
+
+
+3 YARN DistributedShell源码获取
+4 YARN DistributedShell源码分析及修改
+4.1 Client类
+4.1.1 Client">
+<meta property="og:type" content="article">
+<meta property="og:title" content="YARN DistributedShell源码分析与修改">
+<meta property="og:url" content="http://yoursite.com/2016/09/21/YARN DistributedShell源码分析与修改/index.html">
+<meta property="og:site_name" content="DingYu">
+<meta property="og:description" content="1 概述
+2 YARN DistributedShell不能满足当前需求
+2.1 功能需求
+2.2 YARN DistributedShell对需求的支持情况
+2.3 需要对YARN DistributedShell进行的修改
+
+
+3 YARN DistributedShell源码获取
+4 YARN DistributedShell源码分析及修改
+4.1 Client类
+4.1.1 Client">
+<meta property="og:updated_time" content="2016-10-30T09:57:15.881Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="YARN DistributedShell源码分析与修改">
+<meta name="twitter:description" content="1 概述
+2 YARN DistributedShell不能满足当前需求
+2.1 功能需求
+2.2 YARN DistributedShell对需求的支持情况
+2.3 需要对YARN DistributedShell进行的修改
+
+
+3 YARN DistributedShell源码获取
+4 YARN DistributedShell源码分析及修改
+4.1 Client类
+4.1.1 Client">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2016/09/21/YARN DistributedShell源码分析与修改/"/>
+
+
+  <title> YARN DistributedShell源码分析与修改 | DingYu </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="en">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">DingYu</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">DingYu`s Blog</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="http://www.dingyu.org.cn/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            Home
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="http://www.dingyu.org.cn/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            Archives
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="http://www.dingyu.org.cn/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            Tags
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="https://www.linkedin.com/in/byrans" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            About
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                YARN DistributedShell源码分析与修改
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">Posted on</span>
+            <time itemprop="dateCreated" datetime="2016-09-21T00:00:00+08:00" content="2016-09-21">
+              2016-09-21
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <ul>
+<li><a href="#1">1 概述</a></li>
+<li><a href="#2">2 YARN DistributedShell不能满足当前需求</a><ul>
+<li><a href="#21">2.1 功能需求</a></li>
+<li><a href="#22">2.2 YARN DistributedShell对需求的支持情况</a></li>
+<li><a href="#23">2.3 需要对YARN DistributedShell进行的修改</a></li>
+</ul>
+</li>
+<li><a href="#3">3 YARN DistributedShell源码获取</a></li>
+<li><a href="#4">4 YARN DistributedShell源码分析及修改</a><ul>
+<li><a href="#41">4.1 Client类</a><ul>
+<li><a href="#411">4.1.1 Client源码逻辑</a></li>
+<li><a href="#412">4.1.2 对Client源码的修改</a></li>
+</ul>
+</li>
+<li><a href="#42">4.2 ApplicationMaster类</a><ul>
+<li><a href="#421">4.2.1 ApplicationMaster源码逻辑</a></li>
+<li><a href="#422">4.2.2 对ApplicationMaster源码的修改</a></li>
+</ul>
+</li>
+<li><a href="#43">4.3 DSConstants类</a></li>
+<li><a href="#44">4.4 Log4jPropertyHelper类</a></li>
+</ul>
+</li>
+</ul>
+<p><span id="1"></span></p>
+<h1 id="1-概述"><a href="#1-概述" class="headerlink" title="1 概述"></a>1 概述</h1><p>Hadoop YARN项目自带一个非常简单的应用程序编程实例–<strong>DistributedShell</strong>。DistributedShell是一个构建在YARN之上的non-MapReduce应用示例。它的主要功能是在Hadoop集群中的多个节点，并行执行用户提供的shell命令或shell脚本（将用户提交的一串shell命令或者一个shell脚本，由ApplicationMaster控制，分配到不同的container中执行)。</p>
+<p><span id="2"></span></p>
+<h1 id="2-YARN-DistributedShell不能满足当前需求"><a href="#2-YARN-DistributedShell不能满足当前需求" class="headerlink" title="2 YARN DistributedShell不能满足当前需求"></a>2 YARN DistributedShell不能满足当前需求</h1><p><span id="21"></span></p>
+<h2 id="2-1-功能需求"><a href="#2-1-功能需求" class="headerlink" title="2.1 功能需求"></a>2.1 功能需求</h2><p>我所参与的项目通过融合Hive、MapReduce、Spark、Kafka等大数据开源组件，搭建了一个数据分析平台。<br>平台需要新增一个功能：</p>
+<ul>
+<li>在集群中选取一个节点，执行用户提交的jar包。</li>
+<li>该功能需要与平台已有的基于Hive、MR、Spark实现的业务以及YARN相融合。</li>
+<li>简而言之，经分析与调研，我们需要基于YARN的DistributedShell实现该功能。</li>
+</ul>
+<p>该功能需要实现：</p>
+<ul>
+<li>单机执行用户自己提交的jar包</li>
+<li>用户提交的jar包会有其他jar包的依赖</li>
+<li>用户提交的jar包只能选取一个节点运行</li>
+<li>用户提交的jar包需要有缓存数据的目录</li>
+</ul>
+<p><span id="22"></span></p>
+<h2 id="2-2-YARN-DistributedShell对需求的支持情况"><a href="#2-2-YARN-DistributedShell对需求的支持情况" class="headerlink" title="2.2 YARN DistributedShell对需求的支持情况"></a>2.2 YARN DistributedShell对需求的支持情况</h2><p>YARN的DistributedShell功能为：</p>
+<ul>
+<li>支持执行用户提供的shell命令或脚本</li>
+<li>执行节点数可以通过参数num_containers设置，默认值为1</li>
+<li>不支持jar包的执行</li>
+<li>更不支持依赖包的提交</li>
+<li>不支持jar包缓存目录的设置</li>
+</ul>
+<p><span id="23"></span></p>
+<h2 id="2-3-需要对YARN-DistributedShell进行的修改"><a href="#2-3-需要对YARN-DistributedShell进行的修改" class="headerlink" title="2.3 需要对YARN DistributedShell进行的修改"></a>2.3 需要对YARN DistributedShell进行的修改</h2><ul>
+<li>增加支持执行jar包功能</li>
+<li>增加支持缓存目录设置功能</li>
+<li>删除执行节点数设置功能，不允许用户设置执行节点数，将执行节点数保证值为1</li>
+</ul>
+<p><span id="3"></span></p>
+<h1 id="3-YARN-DistributedShell源码获取"><a href="#3-YARN-DistributedShell源码获取" class="headerlink" title="3 YARN DistributedShell源码获取"></a>3 YARN DistributedShell源码获取</h1><p>YARN DistributedShell源码可以在GitHub上apache/hadoop获取，hadoop repository中DistributedShell的源代码路径为:<br><code>hadoop/hadoop-yarn-project/hadoop-yarn/hadoop-yarn-applications/hadoop-yarn-applications-distributedshell/src/main/java/org/apache/hadoop/yarn/applications/distributedshell/</code><br>这里修改的是2.6.0版本源码。</p>
+<p><span id="4"></span></p>
+<h1 id="4-YARN-DistributedShell源码分析及修改"><a href="#4-YARN-DistributedShell源码分析及修改" class="headerlink" title="4 YARN DistributedShell源码分析及修改"></a>4 YARN DistributedShell源码分析及修改</h1><p>YARN DistributedShell包含4个java Class：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">DistributedShell</div><div class="line">    ├── Client.java</div><div class="line">    ├── ApplicationMaster.java</div><div class="line">    ├── DSConstants.java</div><div class="line">    ├── Log4jPropertyHelper.java</div></pre></td></tr></table></figure>
+<ul>
+<li><strong>Client</strong>：客户端提交application</li>
+<li><strong>ApplicationMaster</strong>：注册AM，申请分配container，启动container</li>
+<li><strong>DSConstants</strong>：Client类和ApplicationMaster类中的常量定义</li>
+<li><strong>Log4jPropertyHelper</strong>：加载Log4j配置</li>
+</ul>
+<p><span id="41"></span></p>
+<h2 id="4-1-Client类"><a href="#4-1-Client类" class="headerlink" title="4.1 Client类"></a>4.1 Client类</h2><p><span id="411"></span></p>
+<h3 id="4-1-1-Client源码逻辑"><a href="#4-1-1-Client源码逻辑" class="headerlink" title="4.1.1 Client源码逻辑"></a>4.1.1 Client源码逻辑</h3><p>Client类是DistributedShell应用提交到YARN的客户端。Client将启动application master，然后application master启动多个containers用于运行shell命令或脚本。Client运行逻辑为：</p>
+<ol>
+<li>使用ApplicationClientProtocol协议连接ResourceManager（也叫ApplicationsMaster或ASM），获取一个新的ApplicationId。（ApplicationClientProtocol提供给Client一个获取集群信息的方式）</li>
+<li>在一个job提交过程中，Client首先创建一个ApplicationSubmissionContext。ApplicationSubmissionContext定义了application的详细信息，例如：ApplicationId、application name、application分配的优先级、application分配的队列。另外，ApplicationSubmissionContext还定义了一个Container，该Container用于启动ApplicationMaster。</li>
+<li>在ContainerLaunchContext中需要初始化启动ApplicationMaster的资源：<ul>
+<li>运行ApplicationMaster的container的资源</li>
+<li>jars（例：AppMaster.jar）、配置文件(例：log4j.properties)</li>
+<li>运行环境（例：hadoop特定的类路径、java classpath）</li>
+<li>启动ApplicationMaster的命令</li>
+</ul>
+</li>
+<li>Client使用ApplicationSubmissionContext提交application到ResourceManager，并通过按周期向ResourceManager请求ApplicationReport，完成对applicatoin的监控。</li>
+<li>如果application运行时间超过timeout的限制（默认为600000毫秒，可通过-timeout进行设置），client将发送KillApplicationRequest到ResourceManager，将application杀死。</li>
+</ol>
+<p>具体代码如下(基于YARN2.6.0)：</p>
+<ul>
+<li>Cilent的入口main方法：</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</div><div class="line">        <span class="keyword">boolean</span> result = <span class="keyword">false</span>;</div><div class="line">        <span class="keyword">try</span> &#123;</div><div class="line">            DshellClient client = <span class="keyword">new</span> DshellClient();</div><div class="line">            LOG.info(<span class="string">"Initializing Client"</span>);</div><div class="line">            <span class="keyword">try</span> &#123;</div><div class="line">                <span class="keyword">boolean</span> doRun = client.init(args);</div><div class="line">                <span class="keyword">if</span> (!doRun) &#123;</div><div class="line">                    System.exit(<span class="number">0</span>);</div><div class="line">                &#125;</div><div class="line">            &#125; <span class="keyword">catch</span> (IllegalArgumentException e) &#123;</div><div class="line">                System.err.println(e.getLocalizedMessage());</div><div class="line">                client.printUsage();</div><div class="line">                System.exit(-<span class="number">1</span>);</div><div class="line">            &#125;</div><div class="line">            result = client.run();</div><div class="line">        &#125; <span class="keyword">catch</span> (Throwable t) &#123;</div><div class="line">            LOG.fatal(<span class="string">"Error running Client"</span>, t);</div><div class="line">            System.exit(<span class="number">1</span>);</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">if</span> (result) &#123;</div><div class="line">            LOG.info(<span class="string">"Application completed successfully"</span>);</div><div class="line">            System.exit(<span class="number">0</span>);</div><div class="line">        &#125;</div><div class="line">        LOG.error(<span class="string">"Application failed to complete successfully"</span>);</div><div class="line">        System.exit(<span class="number">2</span>);</div><div class="line">    &#125;</div></pre></td></tr></table></figure>
+<p>main方法：</p>
+<ul>
+<li>输入参数为用户CLI的执行命令，例如：<code>hadoop jar hadoop-yarn-applications-distributedshell-2.0.5-alpha.jar org.apache.hadoop.yarn.applications.distributedshell.Client -jar hadoop-yarn-applications-distributedshell-2.0.5-alpha.jar -shell_command &#39;/bin/date&#39; -num_containers 10</code>,该命令提交的任务为：启动10个container，每个都执行<code>date</code>命令。</li>
+<li>main方法将运行init方法，如果init方法返回true则运行run方法。</li>
+<li>init方法解析用户提交的命令，解析用户命令中的参数值。</li>
+<li>run方法将完成Client源码逻辑中描述的功能。</li>
+</ul>
+<p><span id="412"></span></p>
+<h3 id="4-1-2-对Client源码的修改"><a href="#4-1-2-对Client源码的修改" class="headerlink" title="4.1.2 对Client源码的修改"></a>4.1.2 对Client源码的修改</h3><p>在原有YARN DistributedShell的基础上做的修改如下：</p>
+<ul>
+<li>在CLI为用户增加了<code>container_files</code>和<code>container_archives</code>两个参数<ul>
+<li><code>container_files</code>指定用户要执行的jar包的依赖包，多个依赖包以逗号分隔</li>
+<li><code>container_archives</code>指定用户执行的jar包的缓存目录，多个目录以逗号分隔</li>
+</ul>
+</li>
+<li>删除<code>num_containers</code>参数<ul>
+<li>不允许用户设置container的个数，使用默认值1</li>
+</ul>
+</li>
+</ul>
+<p>对Client源码修改如下：</p>
+<ul>
+<li>变量<ul>
+<li>增加变量用于保存<code>container_files</code>和<code>container_archives</code>两个参数的值</li>
+</ul>
+</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// 增加两个变量，保存container_files、container_archives的参数值↓↓↓↓↓↓↓</span></div><div class="line"><span class="keyword">private</span> String[] containerJarPaths = <span class="keyword">new</span> String[<span class="number">0</span>];</div><div class="line"><span class="keyword">private</span> String[] containerArchivePaths = <span class="keyword">new</span> String[<span class="number">0</span>];</div><div class="line"><span class="comment">// ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑</span></div></pre></td></tr></table></figure>
+<ul>
+<li><p>Client构造方法</p>
+<ul>
+<li>删除num_containers参数的初试化，增加<code>container_files</code>和<code>container_archives</code>两个参数<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// 删除num_containers项，不允许用户设置containers个数，containers个数默认为1 ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓</span></div><div class="line"><span class="comment">//opts.addOption("num_containers", true, "No. of containers on which the shell command needs to be executed");</span></div><div class="line"><span class="comment">// ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑</span></div><div class="line"><span class="comment">// 添加container_files、container_archives的描述↓↓↓↓↓↓↓↓↓↓↓↓↓↓</span></div><div class="line"><span class="keyword">this</span>.opts.addOption(<span class="string">"container_files"</span>, <span class="keyword">true</span>,<span class="string">"The files that containers will run .  Separated by comma"</span>);</div><div class="line"><span class="keyword">this</span>.opts.addOption(<span class="string">"container_archives"</span>, <span class="keyword">true</span>,<span class="string">"The archives that containers will unzip.  Separated by comma"</span>);</div><div class="line"><span class="comment">// ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑</span></div></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+<li><p>init方法</p>
+<ul>
+<li>增加<code>container_files</code>和<code>container_archives</code>两个参数的解析</li>
+</ul>
+</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// 初始化选项container_files、container_archives↓↓↓↓↓↓↓</span></div><div class="line"><span class="keyword">this</span>.opts.addOption(<span class="string">"container_files"</span>, <span class="keyword">true</span>,<span class="string">"The files that containers will run .  Separated by comma"</span>);</div><div class="line"><span class="keyword">this</span>.opts.addOption(<span class="string">"container_archives"</span>, <span class="keyword">true</span>,<span class="string">"The archives that containers will unzip.  Separated by comma"</span>);</div><div class="line"><span class="comment">// ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑</span></div></pre></td></tr></table></figure>
+<ul>
+<li>run方法<ul>
+<li>上传<code>container_files</code>和<code>container_archives</code>两个参数指定的依赖包和缓存目录至HDFS</li>
+</ul>
+</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div></pre></td><td class="code"><pre><div class="line"> <span class="comment">// 上传container_files指定的jar包到HDFS ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓</span></div><div class="line"><span class="keyword">if</span> (<span class="keyword">this</span>.containerJarPaths.length != <span class="number">0</span>)</div><div class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="keyword">this</span>.containerJarPaths.length; i++) &#123;</div><div class="line">        String hdfsJarLocation = <span class="string">""</span>;</div><div class="line">        String[] jarNameSplit = <span class="keyword">this</span>.containerJarPaths[i].split(<span class="string">"/"</span>);</div><div class="line">        String jarName = jarNameSplit[(jarNameSplit.length - <span class="number">1</span>)];</div><div class="line"></div><div class="line">        <span class="keyword">long</span> hdfsJarLen = <span class="number">0L</span>;</div><div class="line">        <span class="keyword">long</span> hdfsJarTimestamp = <span class="number">0L</span>;</div><div class="line">        <span class="keyword">if</span> (!<span class="keyword">this</span>.containerJarPaths[i].isEmpty()) &#123;</div><div class="line">            Path jarSrc = <span class="keyword">new</span> Path(<span class="keyword">this</span>.containerJarPaths[i]);</div><div class="line">            String jarPathSuffix = <span class="keyword">this</span>.appName + <span class="string">"/"</span> + appId.toString() +</div><div class="line">                    <span class="string">"/"</span> + jarName;</div><div class="line">            Path jarDst = <span class="keyword">new</span> Path(fs.getHomeDirectory(), jarPathSuffix);</div><div class="line">            fs.copyFromLocalFile(<span class="keyword">false</span>, <span class="keyword">true</span>, jarSrc, jarDst);</div><div class="line">            hdfsJarLocation = jarDst.toUri().toString();</div><div class="line">            FileStatus jarFileStatus = fs.getFileStatus(jarDst);</div><div class="line">            hdfsJarLen = jarFileStatus.getLen();</div><div class="line">            hdfsJarTimestamp = jarFileStatus.getModificationTime();</div><div class="line">            env.put(DshellDSConstants.DISTRIBUTEDJARLOCATION + i,</div><div class="line">                    hdfsJarLocation);</div><div class="line">            env.put(DshellDSConstants.DISTRIBUTEDJARTIMESTAMP + i,</div><div class="line">                    Long.toString(hdfsJarTimestamp));</div><div class="line">            env.put(DshellDSConstants.DISTRIBUTEDJARLEN + i,</div><div class="line">                    Long.toString(hdfsJarLen));</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"><span class="comment">// ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑</span></div><div class="line"><span class="comment">// 上传container_archives到HDFS↓↓↓↓↓↓↓↓↓↓↓↓↓↓</span></div><div class="line"><span class="keyword">long</span> hdfsArchiveLen;</div><div class="line">String archivePathSuffix;</div><div class="line">Path archiveDst;</div><div class="line">FileStatus archiveFileStatus;</div><div class="line"><span class="keyword">if</span> (<span class="keyword">this</span>.containerArchivePaths.length != <span class="number">0</span>) &#123;</div><div class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="keyword">this</span>.containerArchivePaths.length; i++) &#123;</div><div class="line">        String hdfsArchiveLocation = <span class="string">""</span>;</div><div class="line">        String[] archiveNameSplit = <span class="keyword">this</span>.containerArchivePaths[i].split(<span class="string">"/"</span>);</div><div class="line">        String archiveName = archiveNameSplit[(archiveNameSplit.length - <span class="number">1</span>)];</div><div class="line">        hdfsArchiveLen = <span class="number">0L</span>;</div><div class="line">        <span class="keyword">long</span> hdfsArchiveTimestamp = <span class="number">0L</span>;</div><div class="line">        <span class="keyword">if</span> (!<span class="keyword">this</span>.containerArchivePaths[i].isEmpty()) &#123;</div><div class="line">            Path archiveSrc = <span class="keyword">new</span> Path(<span class="keyword">this</span>.containerArchivePaths[i]);</div><div class="line">            archivePathSuffix = <span class="keyword">this</span>.appName + <span class="string">"/"</span> + appId.toString() +</div><div class="line">                    <span class="string">"/"</span> + archiveName;</div><div class="line">            archiveDst = <span class="keyword">new</span> Path(fs.getHomeDirectory(),</div><div class="line">                    archivePathSuffix);</div><div class="line">            fs.copyFromLocalFile(<span class="keyword">false</span>, <span class="keyword">true</span>, archiveSrc, archiveDst);</div><div class="line">            hdfsArchiveLocation = archiveDst.toUri().toString();</div><div class="line">            archiveFileStatus = fs.getFileStatus(archiveDst);</div><div class="line">            hdfsArchiveLen = archiveFileStatus.getLen();</div><div class="line">            hdfsArchiveTimestamp = archiveFileStatus</div><div class="line">                    .getModificationTime();</div><div class="line">            env.put(DshellDSConstants.DISTRIBUTEDARCHIVELOCATION + i,</div><div class="line">                    hdfsArchiveLocation);</div><div class="line">            env.put(DshellDSConstants.DISTRIBUTEDARCHIVETIMESTAMP + i,</div><div class="line">                    Long.toString(hdfsArchiveTimestamp));</div><div class="line">            env.put(DshellDSConstants.DISTRIBUTEDARCHIVELEN + i,</div><div class="line">                    Long.toString(hdfsArchiveLen));</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"><span class="comment">// ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑</span></div></pre></td></tr></table></figure>
+<p><span id="42"></span></p>
+<h2 id="4-2-ApplicationMaster类"><a href="#4-2-ApplicationMaster类" class="headerlink" title="4.2 ApplicationMaster类"></a>4.2 ApplicationMaster类</h2><p><span id="421"></span></p>
+<h3 id="4-2-1-ApplicationMaster源码逻辑"><a href="#4-2-1-ApplicationMaster源码逻辑" class="headerlink" title="4.2.1 ApplicationMaster源码逻辑"></a>4.2.1 ApplicationMaster源码逻辑</h3><p>一个ApplicationMaster将在启动一个或过个container，在container上执行shell命令或脚本。ApplicationMaster运行逻辑为：</p>
+<ol>
+<li>ResourceManager启动一个container用于运行ApplicationMaster。</li>
+<li>ApplicationMaster连接ResourceManager，向ResourceManager注册自己。<ul>
+<li>向ResourceManager注册的信息有：<ul>
+<li>ApplicationMaster的ip:port</li>
+<li>ApplicationMaster所在主机的hostname</li>
+<li>ApplicationMaster的tracking url。客户端可以用tracking url来跟踪任务的状态和历史记录。</li>
+</ul>
+</li>
+<li>需要注意的是：在DistributedShell中，不需要初注册tracking url和 appMasterHost:appMasterRpcPort，只需要设置hostname。</li>
+</ul>
+</li>
+<li>ApplicationMaster会按照设定的时间间隔向ResourceManager发送心跳。ResourceManager的ApplicationMasterService每次收到ApplicationMaster的心跳信息后，会同时在AMLivelinessMonitor更新其最近一次发送心跳的时间。</li>
+<li>ApplicationMaster通过ContainerRequest方法向ResourceManager发送请求，申请相应数目的container。在发送申请container请求前，需要初始化Request，需要初始化的参数有：<ul>
+<li>Priority：请求的优先级</li>
+<li>capability：当前支持CPU和Memory</li>
+<li>nodes：申请的container所在的host（如果不需要指定，则设为null）</li>
+<li>racks：申请的container所在的rack（如果不需要指定，则设为null）</li>
+</ul>
+</li>
+<li>ResourceManager返回ApplicationMaster的申请的containers信息，根据container的状态-containerStatus，更新已申请成功和还未申请的container数目。</li>
+<li>申请成功的container，ApplicationMaster则通过ContainerLaunchContext初始化container的启动信息。初始化container后启动container。需要初始化的信息有：<ul>
+<li>Container id</li>
+<li>执行资源（Shell脚本或命令、处理的数据）</li>
+<li>运行环境</li>
+<li>运行命令</li>
+</ul>
+</li>
+<li>container运行期间，ApplicationMaster对container进行监控。</li>
+<li>job运行结束，ApplicationMaster发送FinishApplicationMasterRequest请求给ResourceManager，完成ApplicationMaster的注销。</li>
+</ol>
+<p>具体代码如下(基于YARN2.6.0)：</p>
+<ul>
+<li>ApplicationMaster的入口main方法：</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</div><div class="line">       <span class="keyword">boolean</span> result = <span class="keyword">false</span>;</div><div class="line">       <span class="keyword">try</span> &#123;</div><div class="line">           DshellApplicationMaster appMaster = <span class="keyword">new</span> DshellApplicationMaster();</div><div class="line">           LOG.info(<span class="string">"Initializing ApplicationMaster"</span>);</div><div class="line">           <span class="keyword">boolean</span> doRun = appMaster.init(args);</div><div class="line">           <span class="keyword">if</span> (!doRun) &#123;</div><div class="line">               System.exit(<span class="number">0</span>);</div><div class="line">           &#125;</div><div class="line">           appMaster.run();</div><div class="line">           result = appMaster.finish();</div><div class="line">       &#125; <span class="keyword">catch</span> (Throwable t) &#123;</div><div class="line">           LOG.fatal(<span class="string">"Error running ApplicationMaster"</span>, t);</div><div class="line">           LogManager.shutdown();</div><div class="line">           ExitUtil.terminate(<span class="number">1</span>, t);</div><div class="line">       &#125;</div><div class="line">       <span class="keyword">if</span> (result) &#123;</div><div class="line">           LOG.info(<span class="string">"Application Master completed successfully. exiting"</span>);</div><div class="line">           System.exit(<span class="number">0</span>);</div><div class="line">       &#125; <span class="keyword">else</span> &#123;</div><div class="line">           LOG.info(<span class="string">"Application Master failed. exiting"</span>);</div><div class="line">           System.exit(<span class="number">2</span>);</div><div class="line">       &#125;</div><div class="line">   &#125;</div></pre></td></tr></table></figure>
+<p>main方法：</p>
+<ul>
+<li>输入参数为Client提交的执行命令。</li>
+<li>init方法完成对执行命令的解析，获取执行命令中参数指定的值。</li>
+<li>run方法完成ApplicationMaster的启动、注册、containers的申请、分配、监控等功能的启动。<ul>
+<li>run方法中建立了与ResourceManager通信的Handle-<strong>AMRMClientAsync</strong>，其中的CallbackHandler是由RMCallbackHandler类实现的。<ul>
+<li>RMCallbackHandler类中实现了containers的申请、分配等方法。</li>
+<li>containers的分配方法onContainersAllocated中通过LaunchContainerRunnable类中run方法完成container的启动。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>finish方法完成container的停止、ApplicationMaster的注销。</li>
+</ul>
+<p><span id="422"></span></p>
+<h3 id="4-2-2-对ApplicationMaster源码的修改"><a href="#4-2-2-对ApplicationMaster源码的修改" class="headerlink" title="4.2.2 对ApplicationMaster源码的修改"></a>4.2.2 对ApplicationMaster源码的修改</h3><p>在原有YARN DistributedShell的基础上做的修改如下：</p>
+<ul>
+<li>在ApplicationMaster初试化时，增加对<code>container_files</code>和<code>container_archives</code>两个参数指定值的支持。即：初始化<code>container_files</code>和<code>container_archives</code>指定的运行资源在HDFS上的信息。</li>
+<li>在container运行时，从HDFS上加载<code>container_files</code>和<code>container_archives</code>指定的资源。</li>
+</ul>
+<p>对ApplicationMaster源码修改如下：</p>
+<ul>
+<li>变量<ul>
+<li>增加变量，用于保存<code>container_files</code>和<code>container_archives</code>指定的运行资源在HDFS上的信息。</li>
+</ul>
+</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// 增加container_files、container_archives选项值变量 ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓</span></div><div class="line"><span class="keyword">private</span> ArrayList&lt;DshellFile&gt; scistorJars = <span class="keyword">new</span> ArrayList();</div><div class="line"><span class="keyword">private</span> ArrayList&lt;DshellArchive&gt; scistorArchives = <span class="keyword">new</span> ArrayList();</div><div class="line"><span class="comment">// ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑</span></div></pre></td></tr></table></figure>
+<ul>
+<li>ApplicationMaster的init方法<ul>
+<li>初始化<code>container_files</code>和<code>container_archives</code>两个参数指定值信息。</li>
+</ul>
+</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// 遍历envs，把所有的jars、archivers的HDFS路径，时间戳，LEN全部保存到jarPaths对象数组中 ↓↓↓↓↓↓↓↓↓↓</span></div><div class="line"><span class="keyword">for</span> (String key : envs.keySet()) &#123;</div><div class="line">    <span class="keyword">if</span> (key.contains(DshellDSConstants.DISTRIBUTEDJARLOCATION)) &#123;</div><div class="line">        DshellFile scistorJar = <span class="keyword">new</span> DshellFile();</div><div class="line">        scistorJar.setJarPath((String) envs.get(key));</div><div class="line">        String num = key</div><div class="line">                .split(DshellDSConstants.DISTRIBUTEDJARLOCATION)[<span class="number">1</span>];</div><div class="line">        scistorJar.setTimestamp(Long.valueOf(Long.parseLong(</div><div class="line">                (String) envs</div><div class="line">                        .get(DshellDSConstants.DISTRIBUTEDJARTIMESTAMP + num))));</div><div class="line">        scistorJar.setSize(Long.valueOf(Long.parseLong(</div><div class="line">                (String) envs</div><div class="line">                        .get(DshellDSConstants.DISTRIBUTEDJARLEN + num))));</div><div class="line">        <span class="keyword">this</span>.scistorJars.add(scistorJar);</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">for</span> (String key : envs.keySet()) &#123;</div><div class="line">    <span class="keyword">if</span> (key.contains(DshellDSConstants.DISTRIBUTEDARCHIVELOCATION)) &#123;</div><div class="line">        DshellArchive scistorArchive = <span class="keyword">new</span> DshellArchive();</div><div class="line">        scistorArchive.setArchivePath((String) envs.get(key));</div><div class="line">        String num = key</div><div class="line">                .split(DshellDSConstants.DISTRIBUTEDARCHIVELOCATION)[<span class="number">1</span>];</div><div class="line">        scistorArchive.setTimestamp(Long.valueOf(Long.parseLong(</div><div class="line">                (String) envs</div><div class="line">                        .get(DshellDSConstants.DISTRIBUTEDARCHIVETIMESTAMP +</div><div class="line">                                num))));</div><div class="line">        scistorArchive.setSize(Long.valueOf(Long.parseLong(</div><div class="line">                (String) envs</div><div class="line">                        .get(DshellDSConstants.DISTRIBUTEDARCHIVELEN + num))));</div><div class="line">        <span class="keyword">this</span>.scistorArchives.add(scistorArchive);</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"><span class="comment">// ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑</span></div></pre></td></tr></table></figure>
+<ul>
+<li>LaunchContainerRunnable的run方法（container线程的run方法）<ul>
+<li>从HDFS上加载<code>container_files</code>和<code>container_archives</code>指定的资源。</li>
+</ul>
+</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// 把HDFS中的jar、archive加载到container的LocalResources，也就是从HDFS分发到container节点的过程 ↓↓↓↓↓↓↓↓↓↓↓↓↓</span></div><div class="line"><span class="keyword">for</span> (DshellFile perJar : DshellApplicationMaster.<span class="keyword">this</span>.scistorJars) &#123;</div><div class="line">    LocalResource jarRsrc = (LocalResource) Records.newRecord(LocalResource.class);</div><div class="line">    jarRsrc.setType(LocalResourceType.FILE);</div><div class="line">    jarRsrc.setVisibility(LocalResourceVisibility.APPLICATION);</div><div class="line">    <span class="keyword">try</span> &#123;</div><div class="line">        jarRsrc.setResource(</div><div class="line">                ConverterUtils.getYarnUrlFromURI(<span class="keyword">new</span> URI(perJar.getJarPath()</div><div class="line">                        .toString())));</div><div class="line">    &#125; <span class="keyword">catch</span> (URISyntaxException e1) &#123;</div><div class="line">        DshellApplicationMaster.LOG.error(<span class="string">"Error when trying to use JAR path specified in env, path="</span> +</div><div class="line">                perJar.getJarPath(), e1);</div><div class="line">        DshellApplicationMaster.<span class="keyword">this</span>.numCompletedContainers.incrementAndGet();</div><div class="line">        DshellApplicationMaster.<span class="keyword">this</span>.numFailedContainers.incrementAndGet();</div><div class="line">        <span class="keyword">return</span>;</div><div class="line">    &#125;</div><div class="line">    jarRsrc.setTimestamp(perJar.getTimestamp().longValue());</div><div class="line">    jarRsrc.setSize(perJar.getSize().longValue());</div><div class="line">    String[] tmp = perJar.getJarPath().split(<span class="string">"/"</span>);</div><div class="line">    localResources.put(tmp[(tmp.length - <span class="number">1</span>)], jarRsrc);</div><div class="line">&#125;</div><div class="line">String[] tmp;</div><div class="line"><span class="keyword">for</span> (DshellArchive perArchive : DshellApplicationMaster.<span class="keyword">this</span>.scistorArchives) &#123;</div><div class="line">    LocalResource archiveRsrc =</div><div class="line">            (LocalResource) Records.newRecord(LocalResource.class);</div><div class="line">    archiveRsrc.setType(LocalResourceType.ARCHIVE);</div><div class="line">    archiveRsrc.setVisibility(LocalResourceVisibility.APPLICATION);</div><div class="line">    <span class="keyword">try</span> &#123;</div><div class="line">        archiveRsrc.setResource(</div><div class="line">                ConverterUtils.getYarnUrlFromURI(<span class="keyword">new</span> URI(perArchive</div><div class="line">                        .getArchivePath().toString())));</div><div class="line">    &#125; <span class="keyword">catch</span> (URISyntaxException e1) &#123;</div><div class="line">        DshellApplicationMaster.LOG.error(<span class="string">"Error when trying to use ARCHIVE path specified in env, path="</span> +</div><div class="line">                        perArchive.getArchivePath(),</div><div class="line">                e1);</div><div class="line">        DshellApplicationMaster.<span class="keyword">this</span>.numCompletedContainers.incrementAndGet();</div><div class="line">        DshellApplicationMaster.<span class="keyword">this</span>.numFailedContainers.incrementAndGet();</div><div class="line">        <span class="keyword">return</span>;</div><div class="line">    &#125;</div><div class="line">    archiveRsrc.setTimestamp(perArchive.getTimestamp().longValue());</div><div class="line">    archiveRsrc.setSize(perArchive.getSize().longValue());</div><div class="line">    tmp = perArchive.getArchivePath().split(<span class="string">"/"</span>);</div><div class="line">    String[] tmptmp = tmp[(tmp.length - <span class="number">1</span>)].split(<span class="string">"[.]"</span>);</div><div class="line">    localResources.put(tmptmp[<span class="number">0</span>], archiveRsrc);</div><div class="line">&#125;</div><div class="line"><span class="comment">// ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑</span></div></pre></td></tr></table></figure>
+<p><span id="43"></span></p>
+<h2 id="4-3-DSConstants类"><a href="#4-3-DSConstants类" class="headerlink" title="4.3 DSConstants类"></a>4.3 DSConstants类</h2><p>DSConstants类中是在Client和ApplicationMaster中的常量，对DSConstants类的修改为：增加了container_files、container_archives相关常量。修改代码如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// 增加container_files、container_archives相关常量 ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓</span></div><div class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String DISTRIBUTEDJARLOCATION = <span class="string">"DISTRIBUTEDJARLOCATION"</span>;</div><div class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String DISTRIBUTEDJARTIMESTAMP = <span class="string">"DISTRIBUTEDJARTIMESTAMP"</span>;</div><div class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String DISTRIBUTEDJARLEN = <span class="string">"DISTRIBUTEDJARLEN"</span>;</div><div class="line"></div><div class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String DISTRIBUTEDARCHIVELOCATION = <span class="string">"DISTRIBUTEDARCHIVELOCATION"</span>;</div><div class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String DISTRIBUTEDARCHIVETIMESTAMP = <span class="string">"DISTRIBUTEDARCHIVETIMESTAMP"</span>;</div><div class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String DISTRIBUTEDARCHIVELEN = <span class="string">"DISTRIBUTEDARCHIVELEN"</span>;</div><div class="line"><span class="comment">// ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑</span></div></pre></td></tr></table></figure>
+<p><span id="44"></span></p>
+<h2 id="4-4-Log4jPropertyHelper类"><a href="#4-4-Log4jPropertyHelper类" class="headerlink" title="4.4 Log4jPropertyHelper类"></a>4.4 Log4jPropertyHelper类</h2><p>对Log4jPropertyHelper类无任何改动。</p>
+<p><br><br><br><br><br></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/reward.png" alt="DingYu wechat" style="width: 200px; max-width: 100%;"/>
+    <div>¥打赏支持</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="../../../../tags/YARN/" rel="tag">#YARN</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="../../17/YARN基本框架介绍/" rel="next" title="YARN基本框架介绍">
+                <i class="fa fa-chevron-left"></i> YARN基本框架介绍
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="../../../10/15/Spark调度管理（读书笔记）/" rel="prev" title="Spark调度管理">
+                Spark调度管理 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="../../../../images/avatar.jpg"
+               alt="DingYu" />
+          <p class="site-author-name" itemprop="name">DingYu</p>
+          <p class="site-description motion-element" itemprop="description">Keep moving. Don't settle.</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="http://www.dingyu.org.cn/archives">
+              <span class="site-state-item-count">14</span>
+              <span class="site-state-item-name">posts</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="http://www.dingyu.org.cn/tags">
+                <span class="site-state-item-count">6</span>
+                <span class="site-state-item-name">tags</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/BYRans" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://cn.linkedin.com/in/byrans" target="_blank" title="LinkedIn">
+                  
+                    <i class="fa fa-fw fa-linkedin-square"></i>
+                  
+                  LinkedIn
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://www.cnblogs.com/BYRans/" target="_blank" title="CNBlog">
+                  
+                    <i class="fa fa-fw fa-hand-o-right"></i>
+                  
+                  CNBlog
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#1-概述"><span class="nav-number">1.</span> <span class="nav-text">1 概述</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#2-YARN-DistributedShell不能满足当前需求"><span class="nav-number">2.</span> <span class="nav-text">2 YARN DistributedShell不能满足当前需求</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#2-1-功能需求"><span class="nav-number">2.1.</span> <span class="nav-text">2.1 功能需求</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-2-YARN-DistributedShell对需求的支持情况"><span class="nav-number">2.2.</span> <span class="nav-text">2.2 YARN DistributedShell对需求的支持情况</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-3-需要对YARN-DistributedShell进行的修改"><span class="nav-number">2.3.</span> <span class="nav-text">2.3 需要对YARN DistributedShell进行的修改</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#3-YARN-DistributedShell源码获取"><span class="nav-number">3.</span> <span class="nav-text">3 YARN DistributedShell源码获取</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#4-YARN-DistributedShell源码分析及修改"><span class="nav-number">4.</span> <span class="nav-text">4 YARN DistributedShell源码分析及修改</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#4-1-Client类"><span class="nav-number">4.1.</span> <span class="nav-text">4.1 Client类</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#4-1-1-Client源码逻辑"><span class="nav-number">4.1.1.</span> <span class="nav-text">4.1.1 Client源码逻辑</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-1-2-对Client源码的修改"><span class="nav-number">4.1.2.</span> <span class="nav-text">4.1.2 对Client源码的修改</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-2-ApplicationMaster类"><span class="nav-number">4.2.</span> <span class="nav-text">4.2 ApplicationMaster类</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#4-2-1-ApplicationMaster源码逻辑"><span class="nav-number">4.2.1.</span> <span class="nav-text">4.2.1 ApplicationMaster源码逻辑</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-2-2-对ApplicationMaster源码的修改"><span class="nav-number">4.2.2.</span> <span class="nav-text">4.2.2 对ApplicationMaster源码的修改</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-3-DSConstants类"><span class="nav-number">4.3.</span> <span class="nav-text">4.3 DSConstants类</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-4-Log4jPropertyHelper类"><span class="nav-number">4.4.</span> <span class="nav-text">4.4 Log4jPropertyHelper类</span></a></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">DingYu</span>
+</div>
+
+<div class="powered-by">
+  Powered by <a class="theme-link" href="https://hexo.io">Hexo</a>
+</div>
+
+<div class="theme-info">
+  Theme -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="../../../../vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="../../../../vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="../../../../vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="../../../../vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="../../../../vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="../../../../vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="../../../../js/src/utils.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="../../../../js/src/motion.js?v=5.0.2"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="../../../../js/src/affix.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="../../../../js/src/schemes/pisces.js?v=5.0.2"></script>
+
+
+
+  
+  <script type="text/javascript" src="../../../../js/src/scrollspy.js?v=5.0.2"></script>
+<script type="text/javascript" src="../../../../js/src/post-details.js?v=5.0.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="../../../../js/src/bootstrap.js?v=5.0.2"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+
+</body>
+</html>

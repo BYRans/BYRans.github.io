@@ -1,0 +1,656 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="../../../../vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="../../../../vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="../../../../css/main.css?v=5.0.2" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Spark," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="../../../../images/avatar.jpg?v=5.0.2" />
+
+
+
+
+
+
+<meta name="description" content="Spark调度管理本文主要介绍在单个任务内Spark的调度管理，Spark调度相关概念如下：
+
+Task（任务）：单个分区数据及上的最小处理流程单元。
+TaskSet（任务集）：由一组关联的，但互相之间没有Shuffle依赖关系的任务所组成的任务集。
+Stage（调度阶段）：一个任务集对应的调度阶段。
+Job（作业）：有一个RDD Action生成的一个或多个调度阶段所组成的一次计算作业。
+App">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Spark调度管理">
+<meta property="og:url" content="http://yoursite.com/2016/10/15/Spark调度管理（读书笔记）/index.html">
+<meta property="og:site_name" content="DingYu">
+<meta property="og:description" content="Spark调度管理本文主要介绍在单个任务内Spark的调度管理，Spark调度相关概念如下：
+
+Task（任务）：单个分区数据及上的最小处理流程单元。
+TaskSet（任务集）：由一组关联的，但互相之间没有Shuffle依赖关系的任务所组成的任务集。
+Stage（调度阶段）：一个任务集对应的调度阶段。
+Job（作业）：有一个RDD Action生成的一个或多个调度阶段所组成的一次计算作业。
+App">
+<meta property="og:image" content="http://images.cnblogs.com/cnblogs_com/BYRans/761498/o_%e5%9b%be4-1%20%e4%bd%9c%e4%b8%9a%e8%b0%83%e5%ba%a6%e6%a6%82%e5%bf%b5%e9%80%bb%e8%be%91%e5%9b%be.png">
+<meta property="og:image" content="http://images.cnblogs.com/cnblogs_com/BYRans/761498/o_fde0ade10517f359345f01c236113b1a.jpg">
+<meta property="og:image" content="http://images.cnblogs.com/cnblogs_com/BYRans/761498/o_%e5%9b%be4-5%20%e8%b0%83%e5%ba%a6%e9%98%b6%e6%ae%b5%e6%8f%90%e4%ba%a4%e9%a1%ba%e5%ba%8f.png">
+<meta property="og:updated_time" content="2016-10-30T09:57:26.354Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Spark调度管理">
+<meta name="twitter:description" content="Spark调度管理本文主要介绍在单个任务内Spark的调度管理，Spark调度相关概念如下：
+
+Task（任务）：单个分区数据及上的最小处理流程单元。
+TaskSet（任务集）：由一组关联的，但互相之间没有Shuffle依赖关系的任务所组成的任务集。
+Stage（调度阶段）：一个任务集对应的调度阶段。
+Job（作业）：有一个RDD Action生成的一个或多个调度阶段所组成的一次计算作业。
+App">
+<meta name="twitter:image" content="http://images.cnblogs.com/cnblogs_com/BYRans/761498/o_%e5%9b%be4-1%20%e4%bd%9c%e4%b8%9a%e8%b0%83%e5%ba%a6%e6%a6%82%e5%bf%b5%e9%80%bb%e8%be%91%e5%9b%be.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2016/10/15/Spark调度管理（读书笔记）/"/>
+
+
+  <title> Spark调度管理 | DingYu </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="en">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">DingYu</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">DingYu`s Blog</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="http://www.dingyu.org.cn/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            Home
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="http://www.dingyu.org.cn/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            Archives
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="http://www.dingyu.org.cn/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            Tags
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="https://www.linkedin.com/in/byrans" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            About
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Spark调度管理
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">Posted on</span>
+            <time itemprop="dateCreated" datetime="2016-10-15T00:00:00+08:00" content="2016-10-15">
+              2016-10-15
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="Spark调度管理"><a href="#Spark调度管理" class="headerlink" title="Spark调度管理"></a>Spark调度管理</h1><p>本文主要介绍在单个任务内Spark的调度管理，Spark调度相关概念如下：</p>
+<ul>
+<li>Task（任务）：单个分区数据及上的最小处理流程单元。</li>
+<li>TaskSet（任务集）：由一组关联的，但互相之间没有Shuffle依赖关系的任务所组成的任务集。</li>
+<li>Stage（调度阶段）：一个任务集对应的调度阶段。</li>
+<li>Job（作业）：有一个RDD Action生成的一个或多个调度阶段所组成的一次计算作业。</li>
+<li>Application（应用程序）：Spark应用程序，由一个或多个作业组成。</li>
+</ul>
+<p>各概念间的逻辑关系如下图所示：<br><img src="http://images.cnblogs.com/cnblogs_com/BYRans/761498/o_%e5%9b%be4-1%20%e4%bd%9c%e4%b8%9a%e8%b0%83%e5%ba%a6%e6%a6%82%e5%bf%b5%e9%80%bb%e8%be%91%e5%9b%be.png" alt="4-1 作业调度概念逻辑图"></p>
+<p>Spark的调度管理模块中，最重要的类是DAGScheduler和TaskScheduler，TaskScheduler负责每个具体任务的实际物理调度，DAGScheduler负责将作业拆分成不同阶段的具有依赖关系的多批任务，可以理解为DAGScheduler负责任务的逻辑调度。Spark调度管理示意图如下：<br><img src="http://images.cnblogs.com/cnblogs_com/BYRans/761498/o_fde0ade10517f359345f01c236113b1a.jpg" alt="Spark调度管理示意图"></p>
+<h2 id="调度阶段的拆分"><a href="#调度阶段的拆分" class="headerlink" title="调度阶段的拆分"></a>调度阶段的拆分</h2><p>一个Spark任务提交后，DAGScheduler从RDD依赖链末端的RDD出发，遍历整个RDD依赖链，将Job分解成具有前后依赖关系的多个stage。DAGScheduler是根据ShuffleDependency划分stage的，也就是说当某个RDD的运算需要将数据进行shuffle操作时，这个包含了shuffle依赖关系的RDD将被用来作为输入信息，构建一个新的调度阶段。以此为依据划分调度阶段，可以确保有依赖关系的数据能够按照正确的顺序得到处理和运算。</p>
+<h2 id="调度阶段的提交"><a href="#调度阶段的提交" class="headerlink" title="调度阶段的提交"></a>调度阶段的提交</h2><p>在划分Stage的步骤中会得到一个或多个有依赖关系的Stage，其中直接触发作业的RDD关联的调度阶段被称为FinalStage，DAGScheduler从FinalStage开始生成一个Job。Job和Stage的关系存储在一个映射表中，用于在该调度阶段全部完成时做一些后续处理，如报告状态、清理作业相关数据等。</p>
+<p>具体提交一个Stage时，首先判断其依赖的所有父Stage的结果是否可用。如果所有父Stage的结果都可用，则提交该Stage。如果有任何一个父Stage的结果不可用，则尝试迭代提交当前不可用的父Stage。在迭代过程中，父Stage还未运行的Stage都被放到等待队列中，等待将来被提交。</p>
+<p>下图是一个具有四个调度阶段的Job的Stage提交顺序：<br><img src="http://images.cnblogs.com/cnblogs_com/BYRans/761498/o_%e5%9b%be4-5%20%e8%b0%83%e5%ba%a6%e9%98%b6%e6%ae%b5%e6%8f%90%e4%ba%a4%e9%a1%ba%e5%ba%8f.png" alt="图4-5 调度阶段提交顺序示例"></p>
+<p>当一个属于中间过程调度阶段的任务（这种类型的任务所对应的类为ShuffleMapTask）完成后，DAGScheduler会检查对应调度阶段的所有任务是否都完成了。如果完成了，则DAGScheduler将重新扫描一次等待列表中所有的Stage，检查它们是否还有依赖的Stage没有完成。如果所有依赖的Stage都已执行完毕，则提交该Stage。</p>
+<p><em>在这里，博主有一个疑问：**</em>能否按照DAG划分的Stage的拓扑顺序提交执行Stage？<em>**求大家指点迷津。</em></p>
+<h2 id="任务结果的获取"><a href="#任务结果的获取" class="headerlink" title="任务结果的获取"></a>任务结果的获取</h2><p>根据任务结果的大小不同，ResultTask返回的结果分为两中形式：</p>
+<ul>
+<li>如果结果足够小，则直接放在DirectTaskResult对象内。</li>
+<li>如果超过特定尺寸（默认约10MB），则在Executor端会将DirectTaskResult序列化，将序列化的结果作为一个数据块存放在BlockManager中，然后将BlockManager返回的BlockId放在IndirectTaskResult对象中返回给TaskScheduler，TaskScheduler进而调用TaskResultGetter将IndirectTaskResult中的BlockId取出并通过BlockManager最终取得对应的DirectTaskResult。</li>
+</ul>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/reward.png" alt="DingYu wechat" style="width: 200px; max-width: 100%;"/>
+    <div>¥打赏支持</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="../../../../tags/Spark/" rel="tag">#Spark</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="../../../09/21/YARN DistributedShell源码分析与修改/" rel="next" title="YARN DistributedShell源码分析与修改">
+                <i class="fa fa-chevron-left"></i> YARN DistributedShell源码分析与修改
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="../../21/Hadoop HDFS负载均衡/" rel="prev" title="Hadoop HDFS负载均衡">
+                Hadoop HDFS负载均衡 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="../../../../images/avatar.jpg"
+               alt="DingYu" />
+          <p class="site-author-name" itemprop="name">DingYu</p>
+          <p class="site-description motion-element" itemprop="description">Keep moving. Don't settle.</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="http://www.dingyu.org.cn/archives">
+              <span class="site-state-item-count">14</span>
+              <span class="site-state-item-name">posts</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="http://www.dingyu.org.cn/tags">
+                <span class="site-state-item-count">6</span>
+                <span class="site-state-item-name">tags</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/BYRans" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://cn.linkedin.com/in/byrans" target="_blank" title="LinkedIn">
+                  
+                    <i class="fa fa-fw fa-linkedin-square"></i>
+                  
+                  LinkedIn
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://www.cnblogs.com/BYRans/" target="_blank" title="CNBlog">
+                  
+                    <i class="fa fa-fw fa-hand-o-right"></i>
+                  
+                  CNBlog
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Spark调度管理"><span class="nav-number">1.</span> <span class="nav-text">Spark调度管理</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#调度阶段的拆分"><span class="nav-number">1.1.</span> <span class="nav-text">调度阶段的拆分</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#调度阶段的提交"><span class="nav-number">1.2.</span> <span class="nav-text">调度阶段的提交</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#任务结果的获取"><span class="nav-number">1.3.</span> <span class="nav-text">任务结果的获取</span></a></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">DingYu</span>
+</div>
+
+<div class="powered-by">
+  Powered by <a class="theme-link" href="https://hexo.io">Hexo</a>
+</div>
+
+<div class="theme-info">
+  Theme -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="../../../../vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="../../../../vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="../../../../vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="../../../../vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="../../../../vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="../../../../vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="../../../../js/src/utils.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="../../../../js/src/motion.js?v=5.0.2"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="../../../../js/src/affix.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="../../../../js/src/schemes/pisces.js?v=5.0.2"></script>
+
+
+
+  
+  <script type="text/javascript" src="../../../../js/src/scrollspy.js?v=5.0.2"></script>
+<script type="text/javascript" src="../../../../js/src/post-details.js?v=5.0.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="../../../../js/src/bootstrap.js?v=5.0.2"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+
+</body>
+</html>

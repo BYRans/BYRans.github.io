@@ -1,0 +1,683 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="../../../../vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="../../../../vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="../../../../css/main.css?v=5.0.2" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="HDFS," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="../../../../images/avatar.jpg?v=5.0.2" />
+
+
+
+
+
+
+<meta name="description" content="[TOC]
+HDFS的架构HDFS包含两个层次：命名空间管理（Namespace） 和 块/存储管理（Block Storage）。
+
+命名空间管理（Namespace）HDFS的命名空间包含目录、文件和块。命名空间管理是指命名空间支持对HDFS中的目录、文件和块做类似文件系统的创建、修改、删除、列表文件和目录等基本操作。
+
+块/存储管理（Block Storage）在块存储服务中包含两部分工作：">
+<meta property="og:type" content="article">
+<meta property="og:title" content="HDFS Federation">
+<meta property="og:url" content="http://yoursite.com/2016/10/21/HDFS Federation/index.html">
+<meta property="og:site_name" content="DingYu">
+<meta property="og:description" content="[TOC]
+HDFS的架构HDFS包含两个层次：命名空间管理（Namespace） 和 块/存储管理（Block Storage）。
+
+命名空间管理（Namespace）HDFS的命名空间包含目录、文件和块。命名空间管理是指命名空间支持对HDFS中的目录、文件和块做类似文件系统的创建、修改、删除、列表文件和目录等基本操作。
+
+块/存储管理（Block Storage）在块存储服务中包含两部分工作：">
+<meta property="og:image" content="http://images.cnblogs.com/cnblogs_com/BYRans/761498/o_oldHDFSArchiteture.gif">
+<meta property="og:image" content="http://images.cnblogs.com/cnblogs_com/BYRans/761498/o_federation.gif">
+<meta property="og:image" content="http://images.cnblogs.com/cnblogs_com/BYRans/761498/o_client-side-mount-table.jpg">
+<meta property="og:updated_time" content="2016-10-30T09:58:01.115Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="HDFS Federation">
+<meta name="twitter:description" content="[TOC]
+HDFS的架构HDFS包含两个层次：命名空间管理（Namespace） 和 块/存储管理（Block Storage）。
+
+命名空间管理（Namespace）HDFS的命名空间包含目录、文件和块。命名空间管理是指命名空间支持对HDFS中的目录、文件和块做类似文件系统的创建、修改、删除、列表文件和目录等基本操作。
+
+块/存储管理（Block Storage）在块存储服务中包含两部分工作：">
+<meta name="twitter:image" content="http://images.cnblogs.com/cnblogs_com/BYRans/761498/o_oldHDFSArchiteture.gif">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2016/10/21/HDFS Federation/"/>
+
+
+  <title> HDFS Federation | DingYu </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="en">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">DingYu</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">DingYu`s Blog</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="http://www.dingyu.org.cn/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            Home
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="http://www.dingyu.org.cn/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            Archives
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="http://www.dingyu.org.cn/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            Tags
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="https://www.linkedin.com/in/byrans" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            About
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                HDFS Federation
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">Posted on</span>
+            <time itemprop="dateCreated" datetime="2016-10-21T00:00:00+08:00" content="2016-10-21">
+              2016-10-21
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>[TOC]</p>
+<h1 id="HDFS的架构"><a href="#HDFS的架构" class="headerlink" title="HDFS的架构"></a>HDFS的架构</h1><p>HDFS包含两个层次：<strong>命名空间管理</strong>（Namespace） 和 <strong>块/存储管理</strong>（Block Storage）。</p>
+<ul>
+<li><p>命名空间管理（Namespace）<br>HDFS的命名空间包含目录、文件和块。命名空间管理是指命名空间支持对HDFS中的目录、文件和块做类似文件系统的创建、修改、删除、列表文件和目录等基本操作。</p>
+</li>
+<li><p>块/存储管理（Block Storage）<br>在块存储服务中包含两部分工作：块管理和物理存储。这是一个更通用的存储服务。其他的应用可以直接建立在Block Storage上，如HBase，Foreign Namespaces等。</p>
+<ul>
+<li>块管理<ul>
+<li>处理Data Node向Name Node注册的请求，处理datanode的成员关系，处理来自Data Node周期性的心跳。</li>
+<li>处理来自块的报告信息，维护块的位置信息。</li>
+<li>处理与块相关的操作：块的创建、删除、修改及获取块信息。</li>
+<li>管理副本放置（replica placement）和块的复制及多余块的删除。</li>
+</ul>
+</li>
+<li>物理存储<br>所谓物理存储就是：Data Node把块存储到本地文件系统中，对本地文件系统的读、写。</li>
+</ul>
+</li>
+</ul>
+<p><img src="http://images.cnblogs.com/cnblogs_com/BYRans/761498/o_oldHDFSArchiteture.gif" alt="oldHDFSArchiteture"></p>
+<p>整个HDFS集群中只有一个Namenode，还有一个Backup Namenode。Namenode会实时将变化的HDFS的信息同步给Backup Namenode。Backup Namenode顾名思义是用来做Namenode的备份的。Namenode中命名空间以层次结构组织中存储着文件名和BlockID的对应关系、BlockID和具体Block位置的对应关系。这个单独的Namenode管理着数个Datanode，Block分布在各个Datanode中，每个Datanode会周期性的向此Namenode发送心跳消息，报告自己所在Datanode的使用状态。Block是用来存储数据的最小单元，通常一个文件会存储在一个或者多个Block中，默认Block大小为64MB。</p>
+<h1 id="HDFS架构的局限"><a href="#HDFS架构的局限" class="headerlink" title="HDFS架构的局限"></a>HDFS架构的局限</h1><p>当前HDFS架构只允许整个集群中存在一个namespace，而该namespace被仅有的一个namenode管理。这个架构使得HDFS非常容易实现，但是，它在具体实现过程中耦合度比较高，进而导致了很多局限性，当然这些局限性只有在拥有规模大集群的公司，像baidu，腾讯等出现。HDFS的局限性主要为：</p>
+<ul>
+<li>Block Storage和namespace高耦合<br>当前namenode中的namespace和block management的结合使得这两层架构耦合在一起，难以让其他可能namenode实现方案直接使用block storage。</li>
+<li>namenode扩展性<br>HDFS的底层存储是可以水平扩展的（解释：底层存储指的是datanode，当集群存储空间不够时，可简单的添加机器已进行水平扩展），但namespace不可以。当前的namespace只能存放在单个namenode上，而namenode在内存中存储了整个分布式文件系统中的元数据信息，这限制了集群中数据块，文件和目录的数目。</li>
+<li>性能<br>文件操作的性能制约于单个namenode的吞吐量，单个namenode当前仅支持约60K的task，而下一代Apache MapReduce将支持多余100K的并发任务，这隐含着要支持多个namenode。</li>
+<li>隔离性<br>现在大部分公司的集群都是共享的，每天有来自不同group的不同用户提交作业。单个namenode难以提供隔离性，即：某个用户提交的负载很大的job会减慢其他用户的job，单一的namenode难以像HBase按照应用类别将不同作业分派到不同namenode上。</li>
+</ul>
+<h1 id="HDFS-Federation"><a href="#HDFS-Federation" class="headerlink" title="HDFS Federation"></a>HDFS Federation</h1><h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>HDFS Federation是Hadoop最新发布版本Hadoop-0.23.0中为解决HDFS单点故障而提出的namenode水平扩展方案。该方案允许HDFS创建多个namespace以提高集群的扩展性和隔离性。采用Federation的最主要原因是简单，Federation能够快速的解决了大部分单Namenode的问题。</p>
+<h2 id="HDFS-Federation架构"><a href="#HDFS-Federation架构" class="headerlink" title="HDFS Federation架构"></a>HDFS Federation架构</h2><p><img src="http://images.cnblogs.com/cnblogs_com/BYRans/761498/o_federation.gif" alt="federation"><br>为了水平扩展namenode，federation使用了多个独立的namenode/namespace。这些namenode之间是联合的，也就是说，他们之间相互独立且不需要互相协调，各自分工，管理自己的区域。分布式的datanode被用作通用的数据块存储存储设备。每个datanode要向集群中所有的namenode注册，且周期性地向所有namenode发送心跳和块报告，并执行来自所有namenode的命令。<br>一个block pool由属于同一个namespace的数据块组成，每个datanode可能会存储集群中所有block pool的数据块。<br>每个block pool内部自治，也就是说各自管理各自的block，不会与其他block pool交流。一个namenode挂掉了，不会影响其他namenode。<br>某个namenode上的namespace和它对应的block pool一起被称为namespace volume(命名空间卷)。它是管理的基本单位。当一个namenode/nodespace被删除后，其所有datanode上对应的block pool也会被删除。当集群升级时，每个namespace volume作为一个基本单元进行升级。</p>
+<h2 id="Federation关键技术点"><a href="#Federation关键技术点" class="headerlink" title="Federation关键技术点"></a>Federation关键技术点</h2><ul>
+<li><p>命名空间管理<br>Federation中存在多个命名空间，如何划分和管理这些命名空间非常关键。在Federation中并采用“文件名hash”的方法，因为该方法的locality非常差，比如：查看某个目录下面的文件，如果采用文件名hash的方法存放文件，则这些文件可能被放到不同namespace中，HDFS需要访问所有namespace，代价过大。为了方便管理多个命名空间，HDFS Federation采用了经典的Client Side Mount Table。<br><img src="http://images.cnblogs.com/cnblogs_com/BYRans/761498/o_client-side-mount-table.jpg" alt="client-side-mount-table"><br>如上图所示，下面四个深色三角形代表一个独立的命名空间，上方浅色的三角形代表从客户角度去访问的子命名空间。各个深色的命名空间Mount到浅色的表中，客户可以访问不同的挂载点来访问不同的命名空间，这就如同在Linux系统中访问不同挂载点一样。这就是HDFS Federation中命名空间管理的基本原理：将各个命名空间挂载到全局mount-table中，就可以做将数据到全局共享；同样的命名空间挂载到个人的mount-table中，这就成为应用程序可见的命名空间视图。</p>
+</li>
+<li><p>Block Pool（块池）<br>所谓Block pool(块池)就是属于单个命名空间的一组block(块)。每一个datanode为所有的block pool存储块。Datanode是一个物理概念，而block pool是一个重新将block划分的逻辑概念。同一个datanode中可以存着属于多个block pool的多个块。Block pool允许一个命名空间在不通知其他命名空间的情况下为一个新的block创建Block ID。同时，一个Namenode失效不会影响其下的datanode为其他Namenode的服务。<br>当datanode与Namenode建立联系并开始会话后自动建立Block pool。每个block都有一个唯一的标识，这个标识我们称之为扩展的块ID（Extended Block ID）= BlockID+BlockID。这个扩展的块ID在HDFS集群之间都是唯一的，这为以后集群归并创造了条件。<br>Datanode中的数据结构都通过块池ID（BlockPoolID）索引，即datanode中的BlockMap，storage等都通过BPID索引。<br>在HDFS中，所有的更新、回滚都是以Namenode和BlockPool为单元发生的。即同一HDFS Federation中不同的Namenode/BlockPool之间没有什么关系。<br>Hadoop V0.23版本中Block Pool的管理功能依然放在了Namenode中，将来的版本中会将Block Pool的管理功能移动的新的功能节点中。</p>
+</li>
+</ul>
+<h2 id="主要优点"><a href="#主要优点" class="headerlink" title="主要优点"></a>主要优点</h2><ul>
+<li>扩展性和隔离性<br>支持多个namenode水平扩展整个文件系统的namespace。可按照应用程序的用户和种类分离namespace volume，进而增强了隔离性。</li>
+<li>通用存储服务<br>Block Pool抽象层为HDFS的架构开启了创新之门。分离block storage layer使得：<ul>
+<li>新的文件系统（non-HDFS）可以在block storage上构建</li>
+<li>新的应用程序（如HBase）可以直接使用block storage层</li>
+<li>分离的block storage层为将来完全分布式namespace打下基础</li>
+</ul>
+</li>
+<li>设计简单<br>Federation 整个核心设计实现大概用了4个月。大部分改变是在Datanode、Config和Tools中，而Namenode本身的改动非常少，这样 Namenode原先的鲁棒性不会受到影响。虽然这种实现的扩展性比起真正的分布式的Namenode要小些，但是可以迅速满足需求，另外Federation具有良好的向后兼容性，已有的单Namenode的部署配置不需要任何改变就可以继续工作</li>
+</ul>
+<h2 id="HDFS-Federation不足"><a href="#HDFS-Federation不足" class="headerlink" title="HDFS Federation不足"></a>HDFS Federation不足</h2><ul>
+<li>单点故障问题<br>HDFS Federation并没有完全解决单点故障问题。虽然namenode/namespace存在多个，但是从单个namenode/namespace看，仍然存在单点故障：如果某个namenode挂掉了，其管理的相应的文件便不可以访问。Federation中每个namenode仍然像之前HDFS上实现一样，配有一个secondary namenode，以便主namenode挂掉一下，用于还原元数据信息。</li>
+<li>负载均衡问题<br>HDFS Federation采用了Client Side Mount Table分摊文件和负载，该方法更多的需要人工介入已达到理想的负载均衡。</li>
+</ul>
+<h1 id="引用资料"><a href="#引用资料" class="headerlink" title="引用资料"></a>引用资料</h1><p><a href="http://zh.hortonworks.com/blog/an-introduction-to-hdfs-federation/" target="_blank" rel="external">http://zh.hortonworks.com/blog/an-introduction-to-hdfs-federation/</a><br><a href="http://dongxicheng.org/mapreduce/hdfs-federation-introduction/" target="_blank" rel="external">http://dongxicheng.org/mapreduce/hdfs-federation-introduction/</a><br><a href="http://blog.csdn.net/strongerbit/article/details/7013221/" target="_blank" rel="external">http://blog.csdn.net/strongerbit/article/details/7013221/</a></p>
+<p>注：本博客引用了上面的博客内容，如有侵权，请联系博主。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/reward.png" alt="DingYu wechat" style="width: 200px; max-width: 100%;"/>
+    <div>¥打赏支持</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="../../../../tags/HDFS/" rel="tag">#HDFS</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="../Spark SQL 官方文档-中文翻译/" rel="next" title="Spark SQL官方文档-中文翻译">
+                <i class="fa fa-chevron-left"></i> Spark SQL官方文档-中文翻译
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="../../28/Spark快速入门 - Spark 1.6.0/" rel="prev" title="Spark快速入门 - Spark 1.6.0">
+                Spark快速入门 - Spark 1.6.0 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="../../../../images/avatar.jpg"
+               alt="DingYu" />
+          <p class="site-author-name" itemprop="name">DingYu</p>
+          <p class="site-description motion-element" itemprop="description">Keep moving. Don't settle.</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="http://www.dingyu.org.cn/archives">
+              <span class="site-state-item-count">14</span>
+              <span class="site-state-item-name">posts</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="http://www.dingyu.org.cn/tags">
+                <span class="site-state-item-count">6</span>
+                <span class="site-state-item-name">tags</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/BYRans" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://cn.linkedin.com/in/byrans" target="_blank" title="LinkedIn">
+                  
+                    <i class="fa fa-fw fa-linkedin-square"></i>
+                  
+                  LinkedIn
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://www.cnblogs.com/BYRans/" target="_blank" title="CNBlog">
+                  
+                    <i class="fa fa-fw fa-hand-o-right"></i>
+                  
+                  CNBlog
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#HDFS的架构"><span class="nav-number">1.</span> <span class="nav-text">HDFS的架构</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#HDFS架构的局限"><span class="nav-number">2.</span> <span class="nav-text">HDFS架构的局限</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#HDFS-Federation"><span class="nav-number">3.</span> <span class="nav-text">HDFS Federation</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#概述"><span class="nav-number">3.1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#HDFS-Federation架构"><span class="nav-number">3.2.</span> <span class="nav-text">HDFS Federation架构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Federation关键技术点"><span class="nav-number">3.3.</span> <span class="nav-text">Federation关键技术点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#主要优点"><span class="nav-number">3.4.</span> <span class="nav-text">主要优点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#HDFS-Federation不足"><span class="nav-number">3.5.</span> <span class="nav-text">HDFS Federation不足</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#引用资料"><span class="nav-number">4.</span> <span class="nav-text">引用资料</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">DingYu</span>
+</div>
+
+<div class="powered-by">
+  Powered by <a class="theme-link" href="https://hexo.io">Hexo</a>
+</div>
+
+<div class="theme-info">
+  Theme -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="../../../../vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="../../../../vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="../../../../vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="../../../../vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="../../../../vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="../../../../vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="../../../../js/src/utils.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="../../../../js/src/motion.js?v=5.0.2"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="../../../../js/src/affix.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="../../../../js/src/schemes/pisces.js?v=5.0.2"></script>
+
+
+
+  
+  <script type="text/javascript" src="../../../../js/src/scrollspy.js?v=5.0.2"></script>
+<script type="text/javascript" src="../../../../js/src/post-details.js?v=5.0.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="../../../../js/src/bootstrap.js?v=5.0.2"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+
+</body>
+</html>

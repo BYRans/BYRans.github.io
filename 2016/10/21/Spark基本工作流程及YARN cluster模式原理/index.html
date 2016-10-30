@@ -1,0 +1,685 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="../../../../vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="../../../../vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="../../../../css/main.css?v=5.0.2" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Spark," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="../../../../images/avatar.jpg?v=5.0.2" />
+
+
+
+
+
+
+<meta name="description" content="[toc]
+Spark基本工作流程相关术语解释Spark应用程序相关的几个术语：
+
+Worker：集群中任何可以运行Application代码的节点，类似于YARN中的NodeManager节点。在Spark on Yarn模式中指的就是NodeManager节点；
+Executor：Application运行在Worker 节点上的一个进程，该进程负责运行Task，并且负责将数据存在内存或者磁盘">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Spark基本工作流程及YARN cluster模式原理">
+<meta property="og:url" content="http://yoursite.com/2016/10/21/Spark基本工作流程及YARN cluster模式原理/index.html">
+<meta property="og:site_name" content="DingYu">
+<meta property="og:description" content="[toc]
+Spark基本工作流程相关术语解释Spark应用程序相关的几个术语：
+
+Worker：集群中任何可以运行Application代码的节点，类似于YARN中的NodeManager节点。在Spark on Yarn模式中指的就是NodeManager节点；
+Executor：Application运行在Worker 节点上的一个进程，该进程负责运行Task，并且负责将数据存在内存或者磁盘">
+<meta property="og:image" content="http://images.cnblogs.com/cnblogs_com/BYRans/761498/o_sparkArchitecture.png">
+<meta property="og:image" content="http://images.cnblogs.com/cnblogs_com/BYRans/761498/o_sparkProcessDetail.png">
+<meta property="og:image" content="http://images.cnblogs.com/cnblogs_com/BYRans/761498/o_yarnClusterSparkProcess.png">
+<meta property="og:updated_time" content="2016-10-30T09:57:32.957Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Spark基本工作流程及YARN cluster模式原理">
+<meta name="twitter:description" content="[toc]
+Spark基本工作流程相关术语解释Spark应用程序相关的几个术语：
+
+Worker：集群中任何可以运行Application代码的节点，类似于YARN中的NodeManager节点。在Spark on Yarn模式中指的就是NodeManager节点；
+Executor：Application运行在Worker 节点上的一个进程，该进程负责运行Task，并且负责将数据存在内存或者磁盘">
+<meta name="twitter:image" content="http://images.cnblogs.com/cnblogs_com/BYRans/761498/o_sparkArchitecture.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2016/10/21/Spark基本工作流程及YARN cluster模式原理/"/>
+
+
+  <title> Spark基本工作流程及YARN cluster模式原理 | DingYu </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="en">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">DingYu</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">DingYu`s Blog</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="http://www.dingyu.org.cn/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            Home
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="http://www.dingyu.org.cn/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            Archives
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="http://www.dingyu.org.cn/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            Tags
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="https://www.linkedin.com/in/byrans" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            About
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Spark基本工作流程及YARN cluster模式原理
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">Posted on</span>
+            <time itemprop="dateCreated" datetime="2016-10-21T00:00:00+08:00" content="2016-10-21">
+              2016-10-21
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>[toc]</p>
+<h1 id="Spark基本工作流程"><a href="#Spark基本工作流程" class="headerlink" title="Spark基本工作流程"></a>Spark基本工作流程</h1><h2 id="相关术语解释"><a href="#相关术语解释" class="headerlink" title="相关术语解释"></a>相关术语解释</h2><p>Spark应用程序相关的几个术语：</p>
+<ul>
+<li>Worker：集群中任何可以运行Application代码的节点，类似于YARN中的NodeManager节点。在Spark on Yarn模式中指的就是NodeManager节点；</li>
+<li>Executor：Application运行在Worker 节点上的一个进程，该进程负责运行Task，并且负责将数据存在内存或者磁盘上，每个Application都有各自独立的一批Executor。</li>
+<li>SparkContext：由用户程序启动，通过资源调度模块与Executor通信。</li>
+<li>Driver：运行Application的main()函数，并创建SparkContext。其中创建SparkContext的目的是为了准备Spark应用程序的运行环境。在Spark中由SparkContext负责和ClusterManager通信，进行资源的申请、任务的分配和监控等；当Executor部分运行完毕后，Driver负责将SparkContext关闭。通常用SparkContext代表Drive；</li>
+</ul>
+<h2 id="基本运行流程"><a href="#基本运行流程" class="headerlink" title="基本运行流程"></a>基本运行流程</h2><p>Spark应用程序有多种运行模式。SparkContext和Executor这两部分的核心代码实现在各种运行模式中都是公用的，在这两部分之上，根据运行部署模式（例如：Local[N]、Yarn cluster等）的不同，有不同的调度模块以及对应的适配代码。</p>
+<p><img src="http://images.cnblogs.com/cnblogs_com/BYRans/761498/o_sparkArchitecture.png" alt="图3-1 基本框架图"></p>
+<p>具体来说，以SparkContext为程序运行的总入口，在SparkContext的初始化过程中，Spark会分别创建DAGScheduler作业和TaskScheduler任务调度两级调度模块。</p>
+<p>其中作业调度模块是基于任务阶段的高层调度模块，它为每个Spark作业计算具有依赖关系的多个调度阶段（通常根据shuffle来划分），然后为每个阶段构建出一组具体的任务（通常会考虑数据的本地性等），然后以TaskSets（任务组）的形式提交给任务调度模块来具体执行。而任务调度模块则负责具体启动任务、监控和汇报任务运行情况。</p>
+<p><strong>详细的运行流程为：</strong></p>
+<ol>
+<li>构建Spark Application的运行环境（启动SparkContext），SparkContext向资源管理器（可以是Standalone、Mesos或YARN）注册并申请运行Executor资源；</li>
+<li>资源管理器分配Executor资源并启动StandaloneExecutorBackend，Executor运行情况将随着心跳发送到资源管理器上；</li>
+<li>SparkContext构建成DAG图，将DAG图分解成Stage，并把Taskset发送给Task Scheduler。Executor向SparkContext申请Task，Task Scheduler将Task发放给Executor运行同时SparkContext将应用程序代码发放给Executor。</li>
+<li>Task在Executor上运行，运行完毕释放所有资源。</li>
+</ol>
+<p><img src="http://images.cnblogs.com/cnblogs_com/BYRans/761498/o_sparkProcessDetail.png" alt="sparkProcessDetail"></p>
+<p>作业调度模块和具体的部署运行模式无关，在各种运行模式下逻辑相同。不同运行模式的区别主要体现在任务调度模块。不同的部署和运行模式，根据底层资源调度方式的不同，各自实现了自己特定的任务调度模块，用来将任务实际调度给对应的计算资源。接下来重点介绍下YARN cluster模式的实现原理和实现细节。</p>
+<h1 id="YARN-cluster运行模式的内部实现原理"><a href="#YARN-cluster运行模式的内部实现原理" class="headerlink" title="YARN cluster运行模式的内部实现原理"></a>YARN cluster运行模式的内部实现原理</h1><p>Spark有多种运行模式，在这里主要介绍下YARN cluster模式的内部实现原理。如下图是YARN cluster模式的原理框图，相对于其他模式，该模式比较特殊的是它需要由外部程序辅助启动APP。用户的应用程序通过辅助的YARN Client类启动。YARN cluster模式和YARN client模式的区别在于：YARN client模式的AM是运行在提交任务的节点，而YARN cluster模式的AM是由YARN在集群中选取一个节点运行，不一定是在提交任务的节点运行。例如spark-shell如果需要使用YARN模式运行，只能为<code>yarn-client</code>模式，启动命令可以使用<code>spark-shell --master yarn-client</code>。</p>
+<p><img src="http://images.cnblogs.com/cnblogs_com/BYRans/761498/o_yarnClusterSparkProcess.png" alt="图3-9 YARN cluster模式逻辑架构框图"></p>
+<p>Client类通过YARN Client API提交请求，在Hadoop集群上启动一个Spark ApplicationMaster，Spark ApplicationMaster首先注册自己为一个YARN ApplicationMaster，之后启动用户程序，SparkContext在用户程序中初始化时，使用CoarseGrainedSchedulerBackend配合YARNClusterScheduler，YARNClusterScheduler只是对TaskSchedulerImpl的一个简单包装，增加了对Executor的等待逻辑等。</p>
+<p>根据Client类传递的参数，Spark ApplicationMaster通过YARN ResourceManager/NodeManager的接口在集群中启动若干个Container，用于运行CoarseGrainedExecutorBackend.CoarseGrainedExecutorBackend在启动过程中会向CoarseGrainedSchedulerBackend注册。</p>
+<p>CoarseGrainedSchedulerBackend是一个基于Akka Actor实现的粗粒度的资源调度类，在整个Spark作业运行期间，CoarseGrainedSchedulerBackend主要负责如下功能：</p>
+<ul>
+<li>监听并持有注册给它的Executor资源</li>
+<li>根据现有的Executor资源，进行Executor的注册、状态更新、相应Scheduler的请求等任务的调度</li>
+</ul>
+<h1 id="模式的实现细节"><a href="#模式的实现细节" class="headerlink" title="模式的实现细节"></a>模式的实现细节</h1><p>Spark的各种运行模式虽然在启动方式、运行为之、调度手段上有所不同，但它们所要完成的任务基本是一致的，就是在合适的位置安全可靠的根据用户的配置和作业的需要管理和运行任务，在运行调度过程中需要考虑的问题主要为：</p>
+<ul>
+<li>环境变量的传递</li>
+<li>JAR包和各种依赖文件的分发</li>
+<li>任务的管理和序列化等</li>
+<li>用户参数配置</li>
+<li>用户及权限控制</li>
+</ul>
+<h2 id="环境变量的传递"><a href="#环境变量的传递" class="headerlink" title="环境变量的传递"></a>环境变量的传递</h2><p>Spark的运行参数有很大一部分是通过环境变量来设置的，例如Executor的内存设置、Library路径等。在Cluster模式下就涉及到环境变量在各个Worker节点的传递问题。不同的运行模式有不同的传递方式。需要指出的是，在Local模式下，不存在环境变量的传递问题。</p>
+<p>在这里主要说明一下再YARN相关模式下的参数传递。在YARN相关模式中，这些环境变量首先要通过YARN client设置到Spark AM的运行环境中，之后Spark AM在启动Executor时再将环境变量设置到Executor中。</p>
+<h2 id="JAR包和依赖文件的分发"><a href="#JAR包和依赖文件的分发" class="headerlink" title="JAR包和依赖文件的分发"></a>JAR包和依赖文件的分发</h2><p>Spark程序的运行主要有两类依赖：</p>
+<ul>
+<li>Spark运行库及其依赖</li>
+<li>应用程序自身的额外依赖</li>
+</ul>
+<p>在Local模式下，不存在JAR包分发的问题。在这里主要介绍下YARN模式下的文件分发。</p>
+<p>在YARN相关模式中，运行库和程序运行所以来的其他文件首先通过HDFS客户端API上传到作业的.sparkStaing目录下，然后将对应的文件和URL映射关系通知YARN，YARN的Node Manager在启动Container的时候会从指定URL处下载相关文件作为运行环境的一部分。</p>
+<p>对于需要进一步分发到Executor运行环境的文件，Spark YARN客户端将需要分发的文件的相关属性（例：URL、时间戳、尺寸等）打包成字符串，通过特定的环境变量（SPARK_YARN_CACHE_XXXX）传递给Spark AM，Spark AM在创建Executor的Container时还原特定环境变中的各个文件，并通过调用setLocalResources函数初始化Container。</p>
+<h2 id="任务管理和序列化"><a href="#任务管理和序列化" class="headerlink" title="任务管理和序列化"></a>任务管理和序列化</h2><p>Spark任务的运行要解决的问题为：</p>
+<ul>
+<li>以正确的顺序运行任务，有效地管理和分派任务</li>
+<li>将任务及运行所需相关数据有效地发送到远端</li>
+<li>收集运行结果</li>
+</ul>
+<p>Spark任务通过DAGScheduler调用TaskScheduler.submitTasks进行派发，该接口将相关的一组任务一起提交并进行调度。</p>
+<p>任务的运行结果在Executor端被序列化并发送回SchedulerBackend，由于受到Akka帧尺寸的限制，如果运行结果数据过大，结果会存储到BlockManager中，这时候发送到SchedulerBackend的是对应数据的BlockID，TaskScheduler最终会调用TaskResultGetter在线程池中以异步的方式读取结果，TaskSetManager再根据运行结果更新任务状态（比如失败重试等）并汇报给DAGScheduler等。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/reward.png" alt="DingYu wechat" style="width: 200px; max-width: 100%;"/>
+    <div>¥打赏支持</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="../../../../tags/Spark/" rel="tag">#Spark</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="../Spark存储管理/" rel="next" title="Spark存储管理">
+                <i class="fa fa-chevron-left"></i> Spark存储管理
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="../Spark SQL 官方文档-中文翻译/" rel="prev" title="Spark SQL官方文档-中文翻译">
+                Spark SQL官方文档-中文翻译 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="../../../../images/avatar.jpg"
+               alt="DingYu" />
+          <p class="site-author-name" itemprop="name">DingYu</p>
+          <p class="site-description motion-element" itemprop="description">Keep moving. Don't settle.</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="http://www.dingyu.org.cn/archives">
+              <span class="site-state-item-count">14</span>
+              <span class="site-state-item-name">posts</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="http://www.dingyu.org.cn/tags">
+                <span class="site-state-item-count">6</span>
+                <span class="site-state-item-name">tags</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/BYRans" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://cn.linkedin.com/in/byrans" target="_blank" title="LinkedIn">
+                  
+                    <i class="fa fa-fw fa-linkedin-square"></i>
+                  
+                  LinkedIn
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://www.cnblogs.com/BYRans/" target="_blank" title="CNBlog">
+                  
+                    <i class="fa fa-fw fa-hand-o-right"></i>
+                  
+                  CNBlog
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Spark基本工作流程"><span class="nav-number">1.</span> <span class="nav-text">Spark基本工作流程</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#相关术语解释"><span class="nav-number">1.1.</span> <span class="nav-text">相关术语解释</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#基本运行流程"><span class="nav-number">1.2.</span> <span class="nav-text">基本运行流程</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#YARN-cluster运行模式的内部实现原理"><span class="nav-number">2.</span> <span class="nav-text">YARN cluster运行模式的内部实现原理</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#模式的实现细节"><span class="nav-number">3.</span> <span class="nav-text">模式的实现细节</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#环境变量的传递"><span class="nav-number">3.1.</span> <span class="nav-text">环境变量的传递</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#JAR包和依赖文件的分发"><span class="nav-number">3.2.</span> <span class="nav-text">JAR包和依赖文件的分发</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#任务管理和序列化"><span class="nav-number">3.3.</span> <span class="nav-text">任务管理和序列化</span></a></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">DingYu</span>
+</div>
+
+<div class="powered-by">
+  Powered by <a class="theme-link" href="https://hexo.io">Hexo</a>
+</div>
+
+<div class="theme-info">
+  Theme -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="../../../../vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="../../../../vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="../../../../vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="../../../../vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="../../../../vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="../../../../vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="../../../../js/src/utils.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="../../../../js/src/motion.js?v=5.0.2"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="../../../../js/src/affix.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="../../../../js/src/schemes/pisces.js?v=5.0.2"></script>
+
+
+
+  
+  <script type="text/javascript" src="../../../../js/src/scrollspy.js?v=5.0.2"></script>
+<script type="text/javascript" src="../../../../js/src/post-details.js?v=5.0.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="../../../../js/src/bootstrap.js?v=5.0.2"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+
+</body>
+</html>

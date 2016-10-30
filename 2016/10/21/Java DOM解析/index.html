@@ -1,0 +1,708 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="../../../../vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="../../../../vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="../../../../css/main.css?v=5.0.2" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="java," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="../../../../images/avatar.jpg?v=5.0.2" />
+
+
+
+
+
+
+<meta name="description" content="#概述Dom解析的文章已经烂大街了。在这里，只举三个场景下如何编码的例子：
+
+xml内有多个同名节点，获取这多个同名节点
+已获取到某个节点，生成这个节点的xml描述
+修改节点某属性的值
+
+详细的讲解看官请自行百度。dom4j包下载链接为：点击下载dom4j 
+获取多个同名节点
+xml实例
+1234567891011121314  &amp;lt;model name=&quot;model&quot; &amp;gt;">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Java DOM解析">
+<meta property="og:url" content="http://yoursite.com/2016/10/21/Java DOM解析/index.html">
+<meta property="og:site_name" content="DingYu">
+<meta property="og:description" content="#概述Dom解析的文章已经烂大街了。在这里，只举三个场景下如何编码的例子：
+
+xml内有多个同名节点，获取这多个同名节点
+已获取到某个节点，生成这个节点的xml描述
+修改节点某属性的值
+
+详细的讲解看官请自行百度。dom4j包下载链接为：点击下载dom4j 
+获取多个同名节点
+xml实例
+1234567891011121314  &amp;lt;model name=&quot;model&quot; &amp;gt;">
+<meta property="og:updated_time" content="2016-10-30T09:57:55.577Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Java DOM解析">
+<meta name="twitter:description" content="#概述Dom解析的文章已经烂大街了。在这里，只举三个场景下如何编码的例子：
+
+xml内有多个同名节点，获取这多个同名节点
+已获取到某个节点，生成这个节点的xml描述
+修改节点某属性的值
+
+详细的讲解看官请自行百度。dom4j包下载链接为：点击下载dom4j 
+获取多个同名节点
+xml实例
+1234567891011121314  &amp;lt;model name=&quot;model&quot; &amp;gt;">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2016/10/21/Java DOM解析/"/>
+
+
+  <title> Java DOM解析 | DingYu </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="en">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">DingYu</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">DingYu`s Blog</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="http://www.dingyu.org.cn/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            Home
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="http://www.dingyu.org.cn/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            Archives
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="http://www.dingyu.org.cn/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            Tags
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="https://www.linkedin.com/in/byrans" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            About
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Java DOM解析
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">Posted on</span>
+            <time itemprop="dateCreated" datetime="2016-10-21T00:00:00+08:00" content="2016-10-21">
+              2016-10-21
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>#概述<br>Dom解析的文章已经烂大街了。在这里，只举三个场景下如何编码的例子：</p>
+<ul>
+<li>xml内有多个同名节点，获取这多个同名节点</li>
+<li>已获取到某个节点，生成这个节点的xml描述</li>
+<li>修改节点某属性的值</li>
+</ul>
+<p>详细的讲解看官请自行百度。<br>dom4j包下载链接为：<a href="http://sourceforge.net/projects/dom4j/files/" target="_blank" rel="external">点击下载dom4j</a> </p>
+<h1 id="获取多个同名节点"><a href="#获取多个同名节点" class="headerlink" title="获取多个同名节点"></a>获取多个同名节点</h1><ul>
+<li><p>xml实例</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">  <span class="tag">&lt;<span class="name">model</span> <span class="attr">name</span>=<span class="string">"model"</span> &gt;</span></div><div class="line">       <span class="tag">&lt;<span class="name">operator</span> <span class="attr">name</span>=<span class="string">"kafkaInput"</span>&gt;</span></div><div class="line">   	<span class="tag">&lt;<span class="name">parameter</span>  <span class="attr">name</span>=<span class="string">"inputTopicName"</span>  <span class="attr">value</span>=<span class="string">"department1_tn1"</span> /&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">operator</span>&gt;</span></div><div class="line"><span class="tag">&lt;<span class="name">operator</span> <span class="attr">name</span>=<span class="string">"addFielduuid"</span>&gt;</span></div><div class="line">	<span class="tag">&lt;<span class="name">parameter</span>  <span class="attr">name</span>=<span class="string">"parameter1"</span> <span class="attr">value</span>=<span class="string">"p1"</span> /&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">operator</span>&gt;</span></div><div class="line"><span class="tag">&lt;<span class="name">operator</span> <span class="attr">name</span>=<span class="string">"kafkaOutput"</span>&gt;</span></div><div class="line">	<span class="tag">&lt;<span class="name">parameter</span>  <span class="attr">name</span>=<span class="string">"outTopicName"</span> <span class="attr">value</span>=<span class="string">"department1_tn1"</span> /&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">operator</span>&gt;</span></div><div class="line"><span class="tag">&lt;<span class="name">connect</span> <span class="attr">from</span>=<span class="string">"kafkaInput.outport1"</span> <span class="attr">to</span>=<span class="string">"addFielduuid.inport1"</span> /&gt;</span></div><div class="line"><span class="tag">&lt;<span class="name">connect</span> <span class="attr">from</span>=<span class="string">"addFielduuid.outport1"</span> <span class="attr">to</span>=<span class="string">"kafkaOutput.inport1"</span> /&gt;</span></div><div class="line">   <span class="tag">&lt;<span class="name">ouput</span> <span class="attr">path</span>=<span class="string">"/home"</span> /&gt;</span></div><div class="line">  <span class="tag">&lt;/<span class="name">model</span>&gt;</span></div></pre></td></tr></table></figure>
+</li>
+<li><p>如上xml实例中，model下有3个operator节点</p>
+</li>
+<li>获取多个同名节点不仅需要dom4j包，还需要Jaxen包。</li>
+<li>Jaxen包下载链接为：<a href="http://sourceforge.net/projects/jaxen/files/" target="_blank" rel="external">点击下载Jaxen</a></li>
+<li><p>获取这三个节点的代码为：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">parsingSameNameNode</span><span class="params">(String xmlPath)</span> </span>&#123;</div><div class="line">    File file = <span class="keyword">new</span> File(argsPath);</div><div class="line">	<span class="comment">// 创建saxReader对象</span></div><div class="line">	SAXReader reader = <span class="keyword">new</span> SAXReader();</div><div class="line">	<span class="comment">// 通过read方法读取一个文件 转换成Document对象</span></div><div class="line">	Document document;</div><div class="line">	<span class="keyword">try</span> &#123;</div><div class="line">		document = reader.read(file);</div><div class="line">		List&lt;Element&gt; operators = document.selectNodes(<span class="string">"/model/operator"</span>);</div><div class="line">        <span class="keyword">for</span>(Element operator:operators)&#123;</div><div class="line">            <span class="comment">//do something...</span></div><div class="line">        &#125;</div><div class="line">	&#125; <span class="keyword">catch</span> (DocumentException e) &#123;</div><div class="line">		e.printStackTrace();</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<ul>
+<li>通过接口selectNodes(String arg0)</li>
+<li>接口参数为：”/model/operator”。意思是：获取model节点下所有的operator节点。Element可以理解为节点的信息</li>
+<li>注意解析前读取xml内容、构建Document实例的代码:<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">   File file = <span class="keyword">new</span> File(argsPath);</div><div class="line">   <span class="comment">// 创建saxReader对象</span></div><div class="line">SAXReader reader = <span class="keyword">new</span> SAXReader();</div><div class="line"><span class="comment">// 通过read方法读取一个文件 转换成Document对象</span></div><div class="line">Document document;</div><div class="line"><span class="keyword">try</span> &#123;</div><div class="line">	document = reader.read(file);</div><div class="line">       <span class="comment">//do something...</span></div><div class="line">&#125; <span class="keyword">catch</span> (DocumentException e) &#123;</div><div class="line">	e.printStackTrace();</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+</ul>
+<p>#节点的xml描述</p>
+<ul>
+<li>dom解析得到某节点，将节点转为String，即节点的xml描述。</li>
+<li>将节点转化为String格式，接口为asXML()。</li>
+<li><p>转换代码如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// 获取根节点元素对象</span></div><div class="line">Element rootNode = document.getRootElement();</div><div class="line"><span class="comment">// 获取context节点所有文字内容</span></div><div class="line">String context = rootNode.element(<span class="string">"context"</span>).asXML();</div></pre></td></tr></table></figure>
+</li>
+<li><p>上面代码逻辑为：</p>
+<ul>
+<li>根据document拿到dom树的根节点rooNode</li>
+<li>获取rootNode节点下的context节点</li>
+<li>使用asXML()接口，将节点转化为String格式。</li>
+</ul>
+</li>
+</ul>
+<h1 id="修改属性值"><a href="#修改属性值" class="headerlink" title="修改属性值"></a>修改属性值</h1><ul>
+<li>有两种修改属性值的方法<ul>
+<li>先获取到该属性，使用属性的接口setValue()，修改属性值</li>
+<li>先获取到该属性所在节点，使用接口setAttributeValue()修改属性值</li>
+</ul>
+</li>
+</ul>
+<p>###使用属性的setValue()接口，修改属性值</p>
+<ul>
+<li>代码逻辑为：<ul>
+<li>获取到该属性所在节点</li>
+<li>获取该节点的属性，即要修改值的属性</li>
+<li>属性对象调用接口setValue()，接口参数为：属性值</li>
+<li>例上面xml中，output节点的path属性值修改为：/home/BYRans，代码如下：<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">Element rootNode = document.getRootElement();</div><div class="line">Element node = rootNode.element(<span class="string">"/model/output"</span>)</div><div class="line">Attribute path = node.attribute(<span class="string">"path"</span>);</div><div class="line">path.setValue(<span class="string">"/home/BYRans"</span>);</div></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+</ul>
+<p>###使用节点的setAttributeValue接口，修改属性值</p>
+<ul>
+<li>代码逻辑为：<ul>
+<li>获取到该属性所在节点</li>
+<li>节点对象调用接口使用节点的setAttributeValue()，接口参数为：属性名和属性值</li>
+<li>注意此接口已不推荐使用，<del>setAttributeValue</del>()</li>
+<li>例上面xml中，output节点的path属性值修改为：/home/BYRans，代码如下：<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">Element rootNode = document.getRootElement();</div><div class="line">Element node = rootNode.element(<span class="string">"/model/output"</span>)</div><div class="line">node.setAttributeValue(<span class="string">"path"</span>,<span class="string">"/home/BYRans"</span>);</div></pre></td></tr></table></figure></li>
+</ul>
+</li>
+</ul>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/reward.png" alt="DingYu wechat" style="width: 200px; max-width: 100%;"/>
+    <div>¥打赏支持</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="../../../../tags/java/" rel="tag">#java</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="../Hadoop HDFS负载均衡/" rel="next" title="Hadoop HDFS负载均衡">
+                <i class="fa fa-chevron-left"></i> Hadoop HDFS负载均衡
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="../Linux下部署FTP服务器/" rel="prev" title="Linux下部署FTP服务器">
+                Linux下部署FTP服务器 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="../../../../images/avatar.jpg"
+               alt="DingYu" />
+          <p class="site-author-name" itemprop="name">DingYu</p>
+          <p class="site-description motion-element" itemprop="description">Keep moving. Don't settle.</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="http://www.dingyu.org.cn/archives">
+              <span class="site-state-item-count">14</span>
+              <span class="site-state-item-name">posts</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="http://www.dingyu.org.cn/tags">
+                <span class="site-state-item-count">6</span>
+                <span class="site-state-item-name">tags</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/BYRans" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://cn.linkedin.com/in/byrans" target="_blank" title="LinkedIn">
+                  
+                    <i class="fa fa-fw fa-linkedin-square"></i>
+                  
+                  LinkedIn
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://www.cnblogs.com/BYRans/" target="_blank" title="CNBlog">
+                  
+                    <i class="fa fa-fw fa-hand-o-right"></i>
+                  
+                  CNBlog
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#获取多个同名节点"><span class="nav-number">1.</span> <span class="nav-text">获取多个同名节点</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#修改属性值"><span class="nav-number">2.</span> <span class="nav-text">修改属性值</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">DingYu</span>
+</div>
+
+<div class="powered-by">
+  Powered by <a class="theme-link" href="https://hexo.io">Hexo</a>
+</div>
+
+<div class="theme-info">
+  Theme -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="../../../../vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="../../../../vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="../../../../vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="../../../../vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="../../../../vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="../../../../vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="../../../../js/src/utils.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="../../../../js/src/motion.js?v=5.0.2"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="../../../../js/src/affix.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="../../../../js/src/schemes/pisces.js?v=5.0.2"></script>
+
+
+
+  
+  <script type="text/javascript" src="../../../../js/src/scrollspy.js?v=5.0.2"></script>
+<script type="text/javascript" src="../../../../js/src/post-details.js?v=5.0.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="../../../../js/src/bootstrap.js?v=5.0.2"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+
+</body>
+</html>
